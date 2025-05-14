@@ -38,6 +38,9 @@ class MyApp extends StatelessWidget {
         //'/account': (context) => const AccountPage(),
         //'/accountedit': (context) => const AccounteditPage(),
       },
+
+      //home: const SearchScreen(),
+
     );
   }
 }

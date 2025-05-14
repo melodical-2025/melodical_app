@@ -65,7 +65,7 @@ class LoginScreen extends StatelessWidget {
                     backgroundColor: Color(0xFFFFAD75),
                     foregroundColor: Color(0xFFE17951), // 텍스트 색 수정
                   ),
-                  onPressed: () {},
+                  onPressed: () {}, // 눌렀을때 동작 정의안됨 아직
                   child: const Text('로그인'),
                 ),
               ),
@@ -119,38 +119,37 @@ class LoginScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
 
-              // 간편 로그인 아이콘 버튼 3개
+// 소셜 로그인 버튼 (구글, 네이버, 카카오 이미지)
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 구글
-                  CircleAvatar(
-                    backgroundColor: Colors.white,
-                    radius: 24,
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: Image.asset('assets/google.png'),
-                      iconSize: 24,
+                  GestureDetector(
+                    onTap: () {
+                      // 구글 로그인 기능
+                    },
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundImage: AssetImage('assets/google.png'),
                     ),
                   ),
-                  // 네이버
-                  CircleAvatar(
-                    backgroundColor: Colors.white,
-                    radius: 24,
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: Image.asset('assets/naver.png'),
-                      iconSize: 24,
+                  const SizedBox(width: 20),
+                  GestureDetector(
+                    onTap: () {
+                      // 네이버 로그인 기능
+                    },
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundImage: AssetImage('assets/naver.png'),
                     ),
                   ),
-                  // 카카오
-                  CircleAvatar(
-                    backgroundColor: Colors.white,
-                    radius: 24,
-                    child: IconButton(
-                      onPressed: () {},
-                      icon: Image.asset('assets/kakao.png'),
-                      iconSize: 24,
+                  const SizedBox(width: 20),
+                  GestureDetector(
+                    onTap: () {
+                      // 카카오 로그인 기능
+                    },
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundImage: AssetImage('assets/kakao.png'),
                     ),
                   ),
                 ],

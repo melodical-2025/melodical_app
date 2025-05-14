@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
         //'/accountedit': (context) => const AccounteditPage(),
       },
 
-      //home: const SearchScreen(),
+      //home: const SearchScreen(), //검색페이지로 갈 방법을 안만들어놓은 상태에서 검색페이지를 테스트하기위한 바로가기 링크
 
     );
   }

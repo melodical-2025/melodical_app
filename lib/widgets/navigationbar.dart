@@ -2,13 +2,35 @@ import 'package:flutter/material.dart';
 
 class BottomNavBar extends StatelessWidget {
   final int currentIndex;
-  final Function(int) onTabTapped;
 
   const BottomNavBar({
     Key? key,
     required this.currentIndex,
-    required this.onTabTapped,
   }) : super(key: key);
+
+  void _onTabTapped(BuildContext context, int index) {
+    String route;
+    switch (index) {
+      case 0:
+        route = '/home';
+        break;
+      case 1:
+        route = '/search';
+        break;
+      case 2:
+        route = '/ratemusical';
+        break;
+      case 3:
+        route = '/account';
+        break;
+      default:
+        return;
+    }
+
+    if (ModalRoute.of(context)?.settings.name != route) {
+      Navigator.pushReplacementNamed(context, route);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,33 +52,37 @@ class BottomNavBar extends StatelessWidget {
         children: [
           // 홈 버튼
           GestureDetector(
-            onTap: () => onTabTapped(0),
+            onTap: () => _onTabTapped(context, 0),
             child: Icon(
               Icons.home,
+              size: 32,
               color: currentIndex == 0 ? Color(0xFFE17951) : Colors.black,
             ),
           ),
           // 검색 버튼
           GestureDetector(
-            onTap: () => onTabTapped(1),
+            onTap: () => _onTabTapped(context, 1),
             child: Icon(
               Icons.search,
+              size: 32,
               color: currentIndex == 1 ? Color(0xFFE17951) : Colors.black,
             ),
           ),
           // 평가 버튼
           GestureDetector(
-            onTap: () => onTabTapped(2),
+            onTap: () => _onTabTapped(context, 2),
             child: Icon(
               Icons.star,
+              size: 32,
               color: currentIndex == 2 ? Color(0xFFE17951) : Colors.black,
             ),
           ),
           // 마이페이지 버튼
           GestureDetector(
-            onTap: () => onTabTapped(3),
+            onTap: () => _onTabTapped(context, 3),
             child: Icon(
-              Icons.account_circle,
+              Icons.person_outline_rounded,
+              size: 32,
               color: currentIndex == 3 ? Color(0xFFE17951) : Colors.black,
             ),
           ),

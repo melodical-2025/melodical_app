@@ -1,22 +1,8 @@
 import 'package:flutter/material.dart';
 import '../widgets/navigationbar.dart'; // BottomNavBar 위젯 import
 
-class SearchScreen extends StatefulWidget {
+class SearchScreen extends StatelessWidget {
   const SearchScreen({super.key});
-
-  @override
-  State<SearchScreen> createState() => _SearchScreenState();
-}
-
-class _SearchScreenState extends State<SearchScreen> {
-  int _currentIndex = 1; // 하단 내비게이션바 초기 선택 인덱스
-
-  // 탭을 선택했을 때 동작하는 함수
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,10 +31,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
       ),
       // 내비게이션 바 적용
-      bottomNavigationBar: BottomNavBar(
-        currentIndex: _currentIndex,
-        onTabTapped: _onTabTapped,
-      ),
+      bottomNavigationBar: BottomNavBar(currentIndex: 1),
     );
   }
 }

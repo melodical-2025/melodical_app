@@ -31,9 +31,11 @@ class LoginScreen extends StatelessWidget {
                   labelStyle: const TextStyle(color: borderColor),
                   enabledBorder: OutlineInputBorder(
                     borderSide: const BorderSide(color: borderColor),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderSide: const BorderSide(color: borderColor, width: 2),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
@@ -49,9 +51,11 @@ class LoginScreen extends StatelessWidget {
                   labelStyle: const TextStyle(color: borderColor),
                   enabledBorder: OutlineInputBorder(
                     borderSide: const BorderSide(color: borderColor),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderSide: const BorderSide(color: borderColor, width: 2),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                 ),
               ),
@@ -63,10 +67,39 @@ class LoginScreen extends StatelessWidget {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFFFFAD75),
-                    foregroundColor: Color(0xFFE17951), // 텍스트 색 수정
+                    foregroundColor: Color(0xFFE17951),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16), // 더 둥글게
+                    ),
                   ),
-                  onPressed: () {}, // 눌렀을때 동작 정의안됨 아직
-                  child: const Text('로그인'),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/musicalpick');
+                  }, // 눌렀을때 동작 정의안됨 아직
+                  child: Stack(
+                    children: [
+                      // Stroke 텍스트 (아래쪽)
+                      Text(
+                        '로그인',
+                        style: TextStyle(
+                          fontSize: 16,
+                          foreground: Paint()
+                            ..style = PaintingStyle.stroke
+                            ..strokeWidth = 1.5
+                            ..color = Color(0xFFFFE5B6),
+                        ),
+                      ),
+                      // 기본 텍스트 (위쪽)
+                      Text(
+                        '로그인',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFFE17951),
+                        ),
+                      ),
+                    ],
+                  ),
+
                 ),
               ),
               const SizedBox(height: 12),
@@ -76,13 +109,40 @@ class LoginScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/signin');
+                    Navigator.pushNamed(context, '/signup');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Color(0xFFFFD9A3),
-                    foregroundColor: Color(0xFFE17951), // 텍스트 색 수정
+                    foregroundColor: Color(0xFFE17951),
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16), // 더 둥글게
+                    ),
                   ),
-                  child: const Text('회원가입'),
+                  child: Stack(
+                    children: [
+                      // Stroke 텍스트 (아래쪽)
+                      Text(
+                        '회원가입',
+                        style: TextStyle(
+                          fontSize: 16,
+                          foreground: Paint()
+                            ..style = PaintingStyle.stroke
+                            ..strokeWidth = 1.5
+                            ..color = Color(0xFFFFE5B6),
+                        ),
+                      ),
+                      // 기본 텍스트 (위쪽)
+                      Text(
+                        '회원가입',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: Color(0xFFE17951),
+                        ),
+                      ),
+                    ],
+                  ),
+
                 ),
               ),
 

@@ -1,0 +1,2 @@
+C:/Users/Administrator/AndroidStudioProjects/melodical_app/android/app/.cxx/Debug/h4u4g4b5/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/Users/Administrator/AndroidStudioProjects/melodical_app/android/app/.cxx/Debug/h4u4g4b5/armeabi-v7a/CMakeFiles/rebuild_cache.dir

@@ -1,4 +1,4 @@
-name: capstone
+name: melodical_app
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -30,6 +30,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  provider: ^6.1.1
 
 
 
@@ -68,6 +69,7 @@ flutter:
     - assets/kakao.png
     - assets/naver.png
     - assets/google.png
+    - assets/default.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware

@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class LoginScreen extends StatelessWidget {
+import '../models/user_provider.dart';
+
+class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
+
+  @override
+  State<LoginScreen> createState() => _LoginScreenState();
+}
+
+class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController idController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
@@ -24,10 +35,11 @@ class LoginScreen extends StatelessWidget {
 
               // 아이디 입력
               TextField(
+                controller: idController,
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: Colors.white,
-                  labelText: '아이디',
+                  labelText: '이메일 주소',
                   labelStyle: const TextStyle(color: borderColor),
                   enabledBorder: OutlineInputBorder(
                     borderSide: const BorderSide(color: borderColor),
@@ -41,6 +53,7 @@ class LoginScreen extends StatelessWidget {
 
               // 비밀번호 입력
               TextField(
+                controller: passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   filled: true,
@@ -62,10 +75,27 @@ class LoginScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFFFAD75),
-                    foregroundColor: Color(0xFFE17951), // 텍스트 색 수정
+                    backgroundColor: const Color(0xFFFFAD75),
+                    foregroundColor: const Color(0xFFE17951),
                   ),
-                  onPressed: () {}, // 눌렀을때 동작 정의안됨 아직
+                  onPressed: () {
+                    final id = idController.text.trim();
+                    final password = passwordController.text.trim();
+
+                    if (id.isNotEmpty && password.isNotEmpty) {
+                      // ✅ 전역 상태에 사용자 정보 저장
+                      Provider.of<UserProvider>(context, listen: false).setUserInfo(
+                        nickname: '멜로디 유저', // 또는 서버 응답 값으로 대체
+                        email: id,
+                      );
+
+                      Navigator.pushNamed(context, '/home');
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('아이디와 비밀번호를 입력해주세요')),
+                      );
+                    }
+                  },
                   child: const Text('로그인'),
                 ),
               ),
@@ -76,30 +106,29 @@ class LoginScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.pushNamed(context, '/signin');
+                    Navigator.pushNamed(context, '/signup');
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFFFD9A3),
-                    foregroundColor: Color(0xFFE17951), // 텍스트 색 수정
+                    backgroundColor: const Color(0xFFFFD9A3),
+                    foregroundColor: const Color(0xFFE17951),
                   ),
                   child: const Text('회원가입'),
                 ),
               ),
 
+              const SizedBox(height: 24),
 
-
-              // 간편 로그인 텍스트
-              const SizedBox(height: 24), // 로그인/회원가입과 간격
+              // 간편 로그인 구분선
               Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: Divider(
                       thickness: 1,
                       color: Color(0xFFFFD9A3),
                       endIndent: 10,
                     ),
                   ),
-                  Text(
+                  const Text(
                     '간편로그인',
                     style: TextStyle(
                       color: Color(0xFFE17951),
@@ -107,7 +136,7 @@ class LoginScreen extends StatelessWidget {
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                  Expanded(
+                  const Expanded(
                     child: Divider(
                       thickness: 1,
                       color: Color(0xFFFFD9A3),
@@ -118,16 +147,15 @@ class LoginScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
 
-
-// 소셜 로그인 버튼 (구글, 네이버, 카카오 이미지)
+              // 소셜 로그인 버튼들
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   GestureDetector(
                     onTap: () {
-                      // 구글 로그인 기능
+                      // 구글 로그인 기능 추가 예정
                     },
-                    child: CircleAvatar(
+                    child: const CircleAvatar(
                       radius: 20,
                       backgroundImage: AssetImage('assets/google.png'),
                     ),
@@ -135,9 +163,9 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(width: 20),
                   GestureDetector(
                     onTap: () {
-                      // 네이버 로그인 기능
+                      // 네이버 로그인 기능 추가 예정
                     },
-                    child: CircleAvatar(
+                    child: const CircleAvatar(
                       radius: 20,
                       backgroundImage: AssetImage('assets/naver.png'),
                     ),
@@ -145,9 +173,9 @@ class LoginScreen extends StatelessWidget {
                   const SizedBox(width: 20),
                   GestureDetector(
                     onTap: () {
-                      // 카카오 로그인 기능
+                      // 카카오 로그인 기능 추가 예정
                     },
-                    child: CircleAvatar(
+                    child: const CircleAvatar(
                       radius: 20,
                       backgroundImage: AssetImage('assets/kakao.png'),
                     ),

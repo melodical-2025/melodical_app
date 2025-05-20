@@ -1,19 +1,26 @@
 import 'package:flutter/material.dart';
+import 'package:melodical_app/screens/login_screen.dart';
+import 'package:melodical_app/screens/ratemusic_screen.dart';
+import 'package:provider/provider.dart';
+
+import 'models/user_provider.dart';
 import 'screens/splash_screen.dart';
-import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
-import 'screens/ratemusical_screen.dart';
-import 'screens/ratemusic_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/search_screen.dart';
-import 'screens/detail_screen.dart';
 import 'screens/ratemusical_screen.dart';
-import 'screens/ratemusic_screen.dart';
 import 'screens/account_screen.dart';
 import 'screens/accountedit_screen.dart';
+import 'screens/musicpick_screen.dart';
+import 'screens/musicalpick_screen.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => UserProvider(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -23,24 +30,26 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Melodical',
-      initialRoute: '/',
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        primarySwatch: Colors.orange,
+        scaffoldBackgroundColor: const Color(0xFFFFF2DB),
+      ),
+      initialRoute: '/splash', // 앱 시작 시 스플래시부터
       routes: {
-        '/': (context) => const SplashScreen(),
+        '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
-        //'/signup': (context) => const SignupScreen(),
-        //'/musicalpick': (context) => const MusicalpickScreen(),
-        //'/musicpick': (context) => const MusicpickScreen(),
-        //'/home': (context) => const HomeScreen(),
-        //'/search': (context) => const SearchScreen(),
-        //'/detail': (context) => const DetailScreen(),
-        //'/ratemusical': (context) => const RatemusicalScreen(),
-        //'/ratemusic': (context) => const RatemusicScreen(),
-        //'/account': (context) => const AccountPage(),
-        //'/accountedit': (context) => const AccounteditPage(),
+        '/signup': (context) => const SignUpScreen(),
+        '/home': (context) => const HomeScreen(),
+        '/search': (context) => const SearchScreen(),
+        '/ratemusical': (context) => const RateMusicalScreen(),
+        '/account': (context) => const AccountScreen(),
+        '/accountedit': (context) => const AccountEditScreen(),
+        '/musicalpick': (context) => const MusicalPickScreen(),
+        '/musicpick': (context) => const MusicPickScreen(),
+        '/ratemusic': (context) => const RateMusicScreen(),
+
       },
-
-      //home: const SearchScreen(), //검색페이지로 갈 방법을 안만들어놓은 상태에서 검색페이지를 테스트하기위한 바로가기 링크
-
     );
   }
 }

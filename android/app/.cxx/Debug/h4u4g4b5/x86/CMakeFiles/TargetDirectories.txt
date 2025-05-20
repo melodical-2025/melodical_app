@@ -1,0 +1,2 @@
+C:/Users/Administrator/AndroidStudioProjects/melodical_app/android/app/.cxx/Debug/h4u4g4b5/x86/CMakeFiles/edit_cache.dir
+C:/Users/Administrator/AndroidStudioProjects/melodical_app/android/app/.cxx/Debug/h4u4g4b5/x86/CMakeFiles/rebuild_cache.dir

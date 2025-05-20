@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../widgets/navigationbar.dart'; // BottomNavBar 위젯 import
+import '../widgets/navigationbar.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -9,22 +9,30 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  int _currentIndex = 1; // 하단 내비게이션바 초기 선택 인덱스
+  int _currentIndex = 1; // 현재 페이지가 Search이므로 1로 설정
 
-  // 탭을 선택했을 때 동작하는 함수
   void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
+    if (index == 0) {
+      Navigator.pushNamed(context, '/home');
+    } else if (index == 2) {
+      Navigator.pushNamed(context, '/ratemusical');
+    } else if (index == 3) {
+      Navigator.pushNamed(context, '/account');
+    }
   }
+
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // 앱바 없이 배경색을 흰색으로 설정
+      backgroundColor: const Color(0xFFFFF2DB),
       appBar: AppBar(
-        backgroundColor: Colors.white, // 배경색 흰색
-        elevation: 0, // 앱바 그림자 없애기
+        backgroundColor: Colors.white,
+        elevation: 0,
+        title: const Text('검색', style: TextStyle(color: Color(0xFFE17951))),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Color(0xFFE17951)),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -32,19 +40,34 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             // 검색창
             TextField(
+              controller: _searchController,
               decoration: InputDecoration(
                 hintText: '검색어를 입력하세요...',
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: const TextStyle(color: Color(0xFFE17951)),
+                prefixIcon: const Icon(Icons.search, color: Color(0xFFE17951)),
+                filled: true,
+                fillColor: Colors.white,
                 border: OutlineInputBorder(
                   borderSide: const BorderSide(color: Color(0xFFFFAD75)),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                 ),
+                focusedBorder: OutlineInputBorder(
+                  borderSide: const BorderSide(color: Color(0xFFE17951), width: 2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // 향후 검색 결과나 추천 UI를 여기에 추가
+            const Expanded(
+              child: Center(
+                child: Text('여기에 검색 결과가 표시됩니다'),
               ),
             ),
           ],
         ),
       ),
-      // 내비게이션 바 적용
       bottomNavigationBar: BottomNavBar(
         currentIndex: _currentIndex,
         onTabTapped: _onTabTapped,

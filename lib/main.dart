@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-//import 'package:melodical_app/screens/login_screen.dart';
-//import 'package:melodical_app/screens/ratemusic_screen.dart';
 import 'package:provider/provider.dart';
 import 'models/user_provider.dart';
 import 'screens/splash_screen.dart';

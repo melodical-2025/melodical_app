@@ -6,18 +6,18 @@ class UserProvider extends ChangeNotifier {
   List<String> _selectedMusicals = [];
   List<String> _selectedMusics = [];
 
-  // ⭐ NEW: 별점 상태 저장용 Map
-  final Map<String, int> _musicalRatings = {};
-  final Map<String, int> _musicRatings = {};
+  // ⭐ 별점 상태 저장용 Map (double 타입으로 수정)
+  final Map<String, double> _musicalRatings = {};
+  final Map<String, double> _musicRatings = {};
 
   String get nickname => _nickname;
   String get email => _email;
   List<String> get selectedMusicals => _selectedMusicals;
   List<String> get selectedMusics => _selectedMusics;
 
-  // ⭐ NEW: 별점 getter
-  Map<String, int> get musicalRatings => _musicalRatings;
-  Map<String, int> get musicRatings => _musicRatings;
+  // ⭐ 별점 getter
+  Map<String, double> get musicalRatings => _musicalRatings;
+  Map<String, double> get musicRatings => _musicRatings;
 
   void setUserInfo({
     required String nickname,
@@ -58,13 +58,13 @@ class UserProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  // ⭐ NEW: 별점 평가 저장 함수
-  void rateMusical(String title, int rating) {
+  // ⭐ 별점 평가 저장 함수 (double로 수정)
+  void rateMusical(String title, double rating) {
     _musicalRatings[title] = rating;
     notifyListeners();
   }
 
-  void rateMusic(String title, int rating) {
+  void rateMusic(String title, double rating) {
     _musicRatings[title] = rating;
     notifyListeners();
   }

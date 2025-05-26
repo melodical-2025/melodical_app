@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
         '/search': (context) => const SearchScreen(),
         '/ratemusical': (context) => const RateScreen(),
         '/account': (context) => const AccountScreen(),
-        //'/accountedit': (context) => const AccounteditScreen(),
+        '/accountedit': (context) => const AccounteditScreen(),
         '/musicalpick': (context) => const MusicalpickScreen(),
         '/musicpick': (context) => const MusicpickScreen(),
 

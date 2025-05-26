@@ -27,6 +27,7 @@ class RateScreen extends StatelessWidget {
                   ),
                 ],
               ),
+
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: const [
@@ -35,7 +36,7 @@ class RateScreen extends StatelessWidget {
                     style: TextStyle(
                       fontFamily: 'Urbanist',
                       color: Color(0xFFD55D2E),
-                      fontSize: 22,
+                      fontSize: 24,
                       fontWeight: FontWeight.bold,
                     ),
                   ),

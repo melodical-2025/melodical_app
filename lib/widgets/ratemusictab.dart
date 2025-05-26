@@ -11,10 +11,11 @@ class RateMusicTab extends StatelessWidget {
     final provider = Provider.of<UserProvider>(context);
 
     final List<Map<String, dynamic>> musicList = [
-      {'title': 'Love Poem - IU', 'image': 'assets/music.png'},
-      {'title': 'Black Swan - BTS', 'image': 'assets/music.png'},
-      {'title': 'Ditto - NewJeans', 'image': 'assets/music.png'},
-      {'title': 'EASY - Le Sserafim', 'image': 'assets/music.png'},
+      {'title': 'Whiplash - aespa', 'image': 'assets/music.png'},
+      {'title': 'Drowning - WOODZ', 'image': 'assets/music.png'},
+      {'title': 'APT. - 로제, Bruno Mars', 'image': 'assets/music.png'},
+      {'title': 'Not Like Us - Kendrick Lamar', 'image': 'assets/music.png'},
+      {'title': '너와의 모든 지금 - 재쓰비', 'image': 'assets/music.png'},
     ];
 
     return ListView.builder(

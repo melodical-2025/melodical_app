@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import '../widgets/navigationbar.dart';
 import '../models/user_provider.dart';
 
@@ -43,29 +44,29 @@ class _RatemusicalScreenState extends State<RatemusicalScreen> {
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  const Text(
+                children: const [
+                  Text(
                     '평가',
                     style: TextStyle(
                       fontFamily: 'Urbanist',
                       color: Color(0xFFD55D2E),
-                      fontSize: 20,
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  const TabBar(
+                  SizedBox(height: 0),
+                  TabBar(
                     labelColor: Color(0xFFD55D2E),
                     unselectedLabelColor: Colors.black,
                     labelStyle: TextStyle(
-                      fontSize: 15,
+                      fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                     unselectedLabelStyle: TextStyle(
-                      fontSize: 15,
+                      fontSize: 16,
                       fontWeight: FontWeight.normal,
                     ),
-                    indicatorSize: TabBarIndicatorSize.tab,  // 탭 전체 너비에 밑줄
+                    indicatorSize: TabBarIndicatorSize.tab,
                     indicatorColor: Color(0xFFD55D2E),
                     indicatorWeight: 2,
                     tabs: [
@@ -73,7 +74,6 @@ class _RatemusicalScreenState extends State<RatemusicalScreen> {
                       Tab(text: '음악'),
                     ],
                   ),
-
                 ],
               ),
             ),
@@ -83,25 +83,25 @@ class _RatemusicalScreenState extends State<RatemusicalScreen> {
             Expanded(
               child: TabBarView(
                 children: [
-                  // 뮤지컬 평가 탭 내용
+                  // 뮤지컬 평가 탭
                   ListView.builder(
                     padding: const EdgeInsets.all(16),
                     itemCount: musicalList.length,
                     itemBuilder: (context, index) {
                       final musical = musicalList[index];
                       final rating =
-                          provider.musicalRatings[musical['title']] ?? 0;
+                          provider.musicalRatings[musical['title']] ?? 0.0;
 
                       return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        padding: const EdgeInsets.symmetric(vertical: 16.0),
                         child: Row(
                           children: [
                             ClipRRect(
                               borderRadius: BorderRadius.circular(8),
                               child: Image.asset(
                                 musical['image'],
-                                width: 60,
-                                height: 80,
+                                width: 80,
+                                height: 110,
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -114,26 +114,26 @@ class _RatemusicalScreenState extends State<RatemusicalScreen> {
                                     '<${musical['title']}>',
                                     style: const TextStyle(
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 18,
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  Row(
-                                    children: List.generate(5, (star) {
-                                      return IconButton(
-                                        iconSize: 20,
-                                        padding: EdgeInsets.zero,
-                                        onPressed: () {
-                                          provider.rateMusical(
-                                              musical['title'], star + 1);
-                                        },
-                                        icon: Icon(
-                                          star < rating
-                                              ? Icons.star
-                                              : Icons.star_border,
-                                          color: Colors.orange,
-                                        ),
-                                      );
-                                    }),
+                                  RatingBar.builder(
+                                    initialRating: rating,
+                                    minRating: 0,
+                                    allowHalfRating: true,
+                                    itemCount: 5,
+                                    itemSize: 32,
+                                    itemPadding: const EdgeInsets.symmetric(horizontal: 2),
+                                    unratedColor: Colors.grey.shade300,
+                                    itemBuilder: (context, _) => const Icon(
+                                      Icons.star,
+                                      color: Colors.orange,
+                                    ),
+                                    onRatingUpdate: (newRating) {
+                                      provider.rateMusical(
+                                          musical['title'], newRating);
+                                    },
                                   ),
                                 ],
                               ),
@@ -144,7 +144,7 @@ class _RatemusicalScreenState extends State<RatemusicalScreen> {
                     },
                   ),
 
-                  // 음악 평가 탭 (빈 화면 예시)
+                  // 음악 평가 탭 (미구현)
                   const Center(
                     child: Text('음악 평가 기능은 준비 중입니다.'),
                   ),

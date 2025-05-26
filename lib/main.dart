@@ -6,8 +6,7 @@ import 'screens/login_screen.dart';
 import 'screens/signup_screen.dart';
 import 'screens/home_screen.dart';
 import 'screens/search_screen.dart';
-import 'screens/ratemusical_screen.dart';
-import 'screens/ratemusic_screen.dart';
+import 'screens/rate_screen.dart';
 import 'screens/account_screen.dart';
 import 'screens/accountedit_screen.dart';
 import 'screens/musicpick_screen.dart';
@@ -41,12 +40,11 @@ class MyApp extends StatelessWidget {
         '/signup': (context) => const SignupScreen(),
         '/home': (context) => const HomeScreen(),
         '/search': (context) => const SearchScreen(),
-        '/ratemusical': (context) => const RatemusicalScreen(),
+        '/ratemusical': (context) => const RateScreen(),
         '/account': (context) => const AccountScreen(),
         //'/accountedit': (context) => const AccounteditScreen(),
         '/musicalpick': (context) => const MusicalpickScreen(),
         '/musicpick': (context) => const MusicpickScreen(),
-        //'/ratemusic': (context) => const RatemusicScreen(),
 
       },
     );

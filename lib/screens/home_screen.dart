@@ -6,7 +6,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // 실제 앱에서는 이 숫자들을 서버나 DB에서 불러옵니다
     int likedCount = 5;
     int ratedMusicals = 8;
     int ratedSongs = 12;
@@ -16,7 +15,6 @@ class HomeScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 커스텀 앱바
           Container(
             height: 110,
             decoration: BoxDecoration(
@@ -46,7 +44,6 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          // "나의 음악 및 뮤지컬 취향"
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: Text(
@@ -54,15 +51,14 @@ class HomeScreen extends StatelessWidget {
               style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,  // 검정색으로 변경
+                color: Colors.black,
               ),
             ),
           ),
 
-          // "당신의 취향에 꼭 맞는 뮤지컬"
           const Expanded(
             child: Align(
-              alignment: Alignment.centerLeft, // 왼쪽 정렬
+              alignment: Alignment.centerLeft,
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 16),
                 child: Text(
@@ -70,42 +66,41 @@ class HomeScreen extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,  // 검정색으로 변경
+                    color: Colors.black,
                   ),
                 ),
               ),
             ),
           ),
 
-          // 하단 박스 3개
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 buildStatBoxWidget(
-                  emoji: '❤️',
+                  icon: Icons.favorite, // Flutter 기본 하트 아이콘
                   assetPath: null,
                   label1: '찜한',
                   label2: '뮤지컬',
                   count: likedCount,
-                  textColor: Colors.black,  // 검정색으로 변경
+                  textColor: Colors.black,
                 ),
                 buildStatBoxWidget(
-                  emoji: null,
+                  icon: null,
                   assetPath: 'assets/musicalicon.png',
                   label1: '평가한',
                   label2: '뮤지컬',
                   count: ratedMusicals,
-                  textColor: Colors.black,  // 검정색으로 변경
+                  textColor: Colors.black,
                 ),
                 buildStatBoxWidget(
-                  emoji: null,
+                  icon: null,
                   assetPath: 'assets/musicicon.png',
                   label1: '평가한',
                   label2: '음악',
                   count: ratedSongs,
-                  textColor: Colors.black,  // 검정색으로 변경
+                  textColor: Colors.black,
                 ),
               ],
             ),
@@ -116,9 +111,10 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  // 박스 만드는 위젯 (아이콘 이미지 or 이모지 + 두 줄 텍스트 + 숫자)
+  // 하단 통계 박스 위젯
   Widget buildStatBoxWidget({
     String? emoji,
+    IconData? icon,
     String? assetPath,
     required String label1,
     required String label2,
@@ -142,11 +138,17 @@ class HomeScreen extends StatelessWidget {
               height: 20,
               fit: BoxFit.contain,
             )
+          else if (icon != null)
+            Icon(
+              icon,
+              color: Colors.red,
+              size: 20,
+            )
           else if (emoji != null)
-            Text(
-              emoji,
-              style: TextStyle(fontSize: 20),
-            ),
+              Text(
+                emoji,
+                style: TextStyle(fontSize: 20),
+              ),
           const SizedBox(width: 6),
           Flexible(
             child: Text(

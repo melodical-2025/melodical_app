@@ -11,12 +11,13 @@ class RateMusicTab extends StatelessWidget {
     final provider = Provider.of<UserProvider>(context);
 
     final List<Map<String, dynamic>> musicList = [
-      {'title': 'Whiplash - aespa', 'image': 'assets/music.png'},
-      {'title': 'Drowning - WOODZ', 'image': 'assets/music.png'},
-      {'title': 'APT. - 로제, Bruno Mars', 'image': 'assets/music.png'},
-      {'title': 'Not Like Us - Kendrick Lamar', 'image': 'assets/music.png'},
-      {'title': '너와의 모든 지금 - 재쓰비', 'image': 'assets/music.png'},
+      {'title': 'Whiplash', 'artist': 'aespa', 'image': 'assets/music.png'},
+      {'title': 'Drowning', 'artist': 'WOODZ', 'image': 'assets/music.png'},
+      {'title': 'APT.', 'artist': '로제, Bruno Mars', 'image': 'assets/music.png'},
+      {'title': 'Not Like Us', 'artist': 'Kendrick Lamar', 'image': 'assets/music.png'},
+      {'title': '너와의 모든 지금', 'artist': '재쓰비', 'image': 'assets/music.png'},
     ];
+
 
     return ListView.builder(
       padding: const EdgeInsets.all(18),
@@ -44,12 +45,13 @@ class RateMusicTab extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      music['title'],
+                      '${music['title']} - ${music['artist']}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
                       ),
                     ),
+
                     const SizedBox(height: 4),
                     RatingBar.builder(
                       initialRating: rating,

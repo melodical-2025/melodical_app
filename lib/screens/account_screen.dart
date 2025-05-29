@@ -10,6 +10,7 @@ class AccountScreen extends StatelessWidget {
   static const primaryColor = Color(0xFFFFAD75);
   static const textColor = Color(0xFFE17951);
   static const dividerColor = Color(0xFFFFD9A3);
+  static const borderColor = Color(0xFFEF7B4E); // 테두리 색상 추가
 
   @override
   Widget build(BuildContext context) {
@@ -53,10 +54,17 @@ class AccountScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 16),
-            const CircleAvatar(
-              radius: 40,
-              backgroundImage: AssetImage('assets/logo.png'),
+            const SizedBox(height: 32), // 앱바와 사진 사이 간격 늘림
+            Container(
+              padding: const EdgeInsets.all(2), // 테두리 두께
+              decoration: const BoxDecoration(
+                color: borderColor,
+                shape: BoxShape.circle,
+              ),
+              child: const CircleAvatar(
+                radius: 40,
+                backgroundImage: AssetImage('assets/logo.png'),
+              ),
             ),
             const SizedBox(height: 12),
             Text(
@@ -75,7 +83,6 @@ class AccountScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 32),
-
             Align(
               alignment: Alignment.centerLeft,
               child: Text(
@@ -88,7 +95,6 @@ class AccountScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-
             _flatSettingItem(
               context,
               '회원정보 수정',
@@ -113,7 +119,7 @@ class AccountScreen extends StatelessWidget {
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(currentIndex: 3),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
     );
   }
 

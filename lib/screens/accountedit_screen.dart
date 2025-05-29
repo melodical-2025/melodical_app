@@ -102,7 +102,7 @@ class _AccounteditScreenState extends State<AccounteditScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              const SizedBox(height: 16),
+              const SizedBox(height: 32),
               const CircleAvatar(
                 radius: 40,
                 backgroundImage: AssetImage('assets/logo.png'),

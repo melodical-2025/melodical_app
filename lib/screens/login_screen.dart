@@ -20,6 +20,13 @@ class _LoginScreenState extends State<LoginScreen> {
   static const textColor = Color(0xFFE17951);
   static const secondaryColor = Color(0xFFFFD9A3);
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _login() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -86,148 +93,201 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  InputDecoration _inputDecoration(String hint) {
-    return InputDecoration(
-      hintText: hint,
-      filled: true,
-      fillColor: Colors.white,
-      hintStyle: const TextStyle(color: textColor),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: primaryColor, width: 2),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: primaryColor, width: 3),
-      ),
-    );
-  }
-
-  Widget _socialIcon(String assetPath, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: CircleAvatar(
-        radius: 20,
-        backgroundColor: Colors.white,
-        backgroundImage: AssetImage(assetPath),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: backgroundColor,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 36),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Image(
-                image: AssetImage('assets/logo.png'),
-                width: 110,
-              ),
-              const SizedBox(height: 32),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24.0),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Image.asset('assets/logo.png', height: 150),
+                  const SizedBox(height: 0),
 
-              TextField(
-                controller: _emailController,
-                decoration: _inputDecoration('이메일 주소'),
-                style: const TextStyle(color: textColor),
-              ),
-              const SizedBox(height: 16),
-
-              TextField(
-                controller: _passwordController,
-                decoration: _inputDecoration('비밀번호'),
-                obscureText: true,
-                style: const TextStyle(color: textColor),
-              ),
-              const SizedBox(height: 20),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _login,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  TextField(
+                    controller: _emailController,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      labelText: '이메일',
+                      labelStyle: const TextStyle(color: primaryColor),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: primaryColor),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: primaryColor, width: 2),
+                      ),
                     ),
+                    style: const TextStyle(color: textColor),
                   ),
-                  child: Stack(
-                    children: [
-                      Text(
-                        '로그인',
-                        style: TextStyle(
-                          fontSize: 16,
-                          foreground: Paint()
-                            ..style = PaintingStyle.stroke
-                            ..strokeWidth = 1.5
-                            ..color = const Color(0xFFFFE5B6),
+                  const SizedBox(height: 16),
+
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      filled: true,
+                      fillColor: Colors.white,
+                      labelText: '비밀번호',
+                      labelStyle: const TextStyle(color: primaryColor),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: primaryColor),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: const BorderSide(color: primaryColor, width: 2),
+                      ),
+                    ),
+                    style: const TextStyle(color: textColor),
+                  ),
+                  const SizedBox(height: 24),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _login,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
                         ),
                       ),
-                      const Text(
-                        '로그인',
-                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      child: Stack(
+                        children: [
+                          Text(
+                            '로그인',
+                            style: TextStyle(
+                              fontSize: 16,
+                              foreground: Paint()
+                                ..style = PaintingStyle.stroke
+                                ..strokeWidth = 1.5
+                                ..color = const Color(0xFFFFE5B6),
+                            ),
+                          ),
+                          const Text(
+                            '로그인',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: textColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pushNamed(context, '/signup'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: secondaryColor,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: Stack(
+                        children: [
+                          Text(
+                            '회원가입',
+                            style: TextStyle(
+                              fontSize: 16,
+                              foreground: Paint()
+                                ..style = PaintingStyle.stroke
+                                ..strokeWidth = 1.5
+                                ..color = const Color(0xFFFFE5B6),
+                            ),
+                          ),
+                          const Text(
+                            '회원가입',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: textColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+
+                  Row(
+                    children: const [
+                      Expanded(
+                        child: Divider(
+                          thickness: 1,
+                          color: secondaryColor,
+                          endIndent: 10,
+                        ),
+                      ),
+                      Text(
+                        '간편로그인',
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      Expanded(
+                        child: Divider(
+                          thickness: 1,
+                          color: secondaryColor,
+                          indent: 10,
+                        ),
                       ),
                     ],
                   ),
-                ),
-              ),
+                  const SizedBox(height: 16),
 
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pushNamed(context, '/signup'),
-                  style: OutlinedButton.styleFrom(
-                    backgroundColor: secondaryColor,
-                    foregroundColor: textColor,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    side: BorderSide.none,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      GestureDetector(
+                        onTap: _signInWithGoogle,
+                        child: const CircleAvatar(
+                          radius: 20,
+                          backgroundImage: AssetImage('assets/google.png'),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      GestureDetector(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('네이버 로그인은 준비 중입니다.')),
+                          );
+                        },
+                        child: const CircleAvatar(
+                          radius: 20,
+                          backgroundImage: AssetImage('assets/naver.png'),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      GestureDetector(
+                        onTap: () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('카카오 로그인은 준비 중입니다.')),
+                          );
+                        },
+                        child: const CircleAvatar(
+                          radius: 20,
+                          backgroundImage: AssetImage('assets/kakao.png'),
+                        ),
+                      ),
+                    ],
                   ),
-                  child: const Text('회원가입', style: TextStyle(fontSize: 16)),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-              const Divider(color: secondaryColor, thickness: 1),
-              const SizedBox(height: 8),
-              const Text(
-                '간편 로그인',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: textColor,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 12),
-
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  _socialIcon('assets/google.png', _signInWithGoogle),
-                  const SizedBox(width: 20),
-                  _socialIcon('assets/kakao.png', () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('카카오 로그인은 준비 중입니다.')),
-                    );
-                  }),
-                  const SizedBox(width: 20),
-                  _socialIcon('assets/naver.png', () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('네이버 로그인은 준비 중입니다.')),
-                    );
-                  }),
                 ],
               ),
-            ],
+            ),
           ),
         ),
       ),

@@ -17,8 +17,10 @@ class _AccounteditScreenState extends State<AccounteditScreen> {
   final TextEditingController _currentPasswordController = TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
 
+  static const backgroundColor = Colors.white;
   static const primaryColor = Color(0xFFFFAD75);
   static const textColor = Color(0xFFE17951);
+  static const secondaryColor = Color(0xFFFFD9A3);
 
   @override
   void initState() {
@@ -53,19 +55,15 @@ class _AccounteditScreenState extends State<AccounteditScreen> {
       final user = FirebaseAuth.instance.currentUser!;
       final email = user.email!;
 
-      // 현재 비밀번호로 재인증
       final cred = EmailAuthProvider.credential(email: email, password: currentPassword);
       await user.reauthenticateWithCredential(cred);
 
-      // 닉네임 업데이트
       await user.updateDisplayName(nickname);
 
-      // 비밀번호 변경
       if (newPassword.isNotEmpty) {
         await user.updatePassword(newPassword);
       }
 
-      // Provider 정보 업데이트
       Provider.of<UserProvider>(context, listen: false).setUserInfo(
         nickname: nickname,
         email: email,
@@ -84,14 +82,42 @@ class _AccounteditScreenState extends State<AccounteditScreen> {
     }
   }
 
+  InputDecoration _inputDecoration(String label, {bool readOnly = false}) {
+    return InputDecoration(
+      labelText: label,
+      filled: true,
+      fillColor: readOnly ? const Color(0xFFEFEFEF) : Colors.white,
+      labelStyle: TextStyle(color: readOnly ? Colors.grey : primaryColor),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: readOnly ? Colors.grey : primaryColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: readOnly ? Colors.grey : primaryColor, width: 2),
+      ),
+    );
+  }
+
+  Widget _textField(TextEditingController controller, String label,
+      {bool obscure = false, bool readOnly = false}) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      readOnly: readOnly,
+      decoration: _inputDecoration(label, readOnly: readOnly),
+      style: TextStyle(color: readOnly ? Colors.grey : textColor),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = Provider.of<UserProvider>(context);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: backgroundColor,
         elevation: 0,
         centerTitle: true,
         title: const Text('회원정보 수정', style: TextStyle(color: textColor)),
@@ -102,47 +128,57 @@ class _AccounteditScreenState extends State<AccounteditScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              const SizedBox(height: 16),
+              const SizedBox(height: 36),
               const CircleAvatar(
                 radius: 40,
                 backgroundImage: AssetImage('assets/logo.png'),
               ),
               const SizedBox(height: 12),
-              Text(
-                user.nickname,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              Text(
-                user.email,
-                style: const TextStyle(color: Colors.black54),
-              ),
+              Text(user.nickname, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              Text(user.email, style: const TextStyle(color: Colors.black54)),
               const SizedBox(height: 32),
 
-              _buildInputField(_nicknameController, '닉네임'),
+              _textField(_nicknameController, '닉네임'),
               const SizedBox(height: 12),
-
-              _buildInputField(_emailController, '이메일 주소', readOnly: true), // ✅ 이메일 읽기 전용
+              _textField(_emailController, '이메일 주소', readOnly: true),
               const SizedBox(height: 12),
-
-              _buildInputField(_currentPasswordController, '현재 비밀번호', obscureText: true),
+              _textField(_currentPasswordController, '현재 비밀번호', obscure: true),
               const SizedBox(height: 12),
-
-              _buildInputField(_newPasswordController, '새 비밀번호 (선택)', obscureText: true),
-              const SizedBox(height: 32),
+              _textField(_newPasswordController, '새 비밀번호 (선택)', obscure: true),
+              const SizedBox(height: 30),
 
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: _saveChanges,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: Colors.white,
+                    backgroundColor: primaryColor, // ← LoginScreen과 동일
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(16), // ← 둥근 테두리 통일
                     ),
                   ),
-                  child: const Text('저장', style: TextStyle(fontSize: 16)),
+                  child: Stack(
+                    children: [
+                      Text(
+                        '저장',
+                        style: TextStyle(
+                          fontSize: 16,
+                          foreground: Paint()
+                            ..style = PaintingStyle.stroke
+                            ..strokeWidth = 1.5
+                            ..color = const Color(0xFFFFE5B6), // stroke 효과
+                        ),
+                      ),
+                      const Text(
+                        '저장',
+                        style: TextStyle(
+                          fontSize: 16,
+                          color: textColor,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               const SizedBox(height: 40),
@@ -151,30 +187,6 @@ class _AccounteditScreenState extends State<AccounteditScreen> {
         ),
       ),
       bottomNavigationBar: BottomNavBar(currentIndex: 3),
-    );
-  }
-
-  Widget _buildInputField(TextEditingController controller, String hint,
-      {bool obscureText = false, bool readOnly = false}) {
-    return TextField(
-      controller: controller,
-      obscureText: obscureText,
-      readOnly: readOnly,
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: TextStyle(color: readOnly ? Colors.grey : textColor),
-        filled: true,
-        fillColor: readOnly ? const Color(0xFFEFEFEF) : Colors.white,
-        border: OutlineInputBorder(
-          borderSide: BorderSide(color: readOnly ? Colors.grey : primaryColor),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: readOnly ? Colors.grey : textColor, width: 2),
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      style: TextStyle(color: readOnly ? Colors.grey : textColor),
     );
   }
 }

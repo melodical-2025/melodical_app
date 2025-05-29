@@ -53,7 +53,7 @@ class AccountScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 16),
+            const SizedBox(height: 32),
             const CircleAvatar(
               radius: 40,
               backgroundImage: AssetImage('assets/logo.png'),

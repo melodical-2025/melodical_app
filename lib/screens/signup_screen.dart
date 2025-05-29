@@ -22,6 +22,15 @@ class _SignupScreenState extends State<SignupScreen> {
   static const textColor = Color(0xFFE17951);
   static const secondaryColor = Color(0xFFFFD9A3);
 
+  @override
+  void dispose() {
+    _nicknameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
   Future<void> _signUp() async {
     final nickname = _nicknameController.text.trim();
     final email = _emailController.text.trim();
@@ -116,6 +125,16 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
+  Widget _socialIcon(String assetPath, VoidCallback? onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: CircleAvatar(
+        radius: 20,
+        backgroundImage: AssetImage(assetPath),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,7 +150,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 color: textColor,
                 onPressed: () => Navigator.pop(context),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: 75),
 
               const Text(
                 "회원가입",
@@ -181,7 +200,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: secondaryColor,
                     foregroundColor: textColor,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -242,36 +261,24 @@ class _SignupScreenState extends State<SignupScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  GestureDetector(
-                    onTap: _signInWithGoogle,
-                    child: const CircleAvatar(
-                      radius: 20,
-                      backgroundImage: AssetImage('assets/google.png'),
-                    ),
-                  ),
+                  _socialIcon('assets/google.png', _signInWithGoogle),
                   const SizedBox(width: 20),
-                  _socialIcon('assets/naver.png'),
+                  _socialIcon('assets/naver.png', () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('네이버 로그인은 준비 중입니다.')),
+                    );
+                  }),
                   const SizedBox(width: 20),
-                  _socialIcon('assets/kakao.png'),
+                  _socialIcon('assets/kakao.png', () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('카카오 로그인은 준비 중입니다.')),
+                    );
+                  }),
                 ],
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _socialIcon(String assetPath) {
-    return GestureDetector(
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('현재 준비 중입니다.')),
-        );
-      },
-      child: CircleAvatar(
-        radius: 20,
-        backgroundImage: AssetImage(assetPath),
       ),
     );
   }

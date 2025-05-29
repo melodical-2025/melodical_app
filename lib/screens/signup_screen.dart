@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:provider/provider.dart';
 import '../models/user_provider.dart';
 
@@ -20,7 +22,7 @@ class _SignupScreenState extends State<SignupScreen> {
   static const textColor = Color(0xFFE17951);
   static const secondaryColor = Color(0xFFFFD9A3);
 
-  void _signUp() {
+  Future<void> _signUp() async {
     final nickname = _nicknameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
@@ -40,12 +42,61 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    Provider.of<UserProvider>(context, listen: false).setUserInfo(
-      nickname: nickname,
-      email: email,
-    );
+    try {
+      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
 
-    Navigator.pushReplacementNamed(context, '/musicalpick');
+      await credential.user!.updateDisplayName(nickname);
+
+      Provider.of<UserProvider>(context, listen: false).setUserInfo(
+        nickname: nickname,
+        email: email,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('회원가입 완료!')),
+      );
+
+      Navigator.pushReplacementNamed(context, '/musicalpick');
+    } on FirebaseAuthException catch (e) {
+      String message = '회원가입 실패';
+      if (e.code == 'email-already-in-use') {
+        message = '이미 사용 중인 이메일입니다';
+      } else if (e.code == 'weak-password') {
+        message = '비밀번호가 너무 약합니다';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    }
+  }
+
+  Future<void> _signInWithGoogle() async {
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return;
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      final user = userCredential.user!;
+
+      Provider.of<UserProvider>(context, listen: false).setUserInfo(
+        nickname: user.displayName ?? '',
+        email: user.email ?? '',
+      );
+
+      Navigator.pushReplacementNamed(context, '/musicalpick');
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('구글 로그인 실패: $e')),
+      );
+    }
   }
 
   InputDecoration _inputDecoration(String label) {
@@ -75,7 +126,6 @@ class _SignupScreenState extends State<SignupScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 뒤로가기 버튼
               IconButton(
                 icon: const Icon(Icons.arrow_back),
                 color: textColor,
@@ -124,7 +174,6 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
               const SizedBox(height: 30),
 
-              // ✅ 로그인 버튼 (stroke 포함)
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
@@ -160,8 +209,8 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 ),
               ),
-
               const SizedBox(height: 24),
+
               Row(
                 children: const [
                   Expanded(
@@ -193,7 +242,13 @@ class _SignupScreenState extends State<SignupScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _socialIcon('assets/google.png'),
+                  GestureDetector(
+                    onTap: _signInWithGoogle,
+                    child: const CircleAvatar(
+                      radius: 20,
+                      backgroundImage: AssetImage('assets/google.png'),
+                    ),
+                  ),
                   const SizedBox(width: 20),
                   _socialIcon('assets/naver.png'),
                   const SizedBox(width: 20),
@@ -210,7 +265,9 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget _socialIcon(String assetPath) {
     return GestureDetector(
       onTap: () {
-        // 소셜 로그인 연동 예정
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('현재 준비 중입니다.')),
+        );
       },
       child: CircleAvatar(
         radius: 20,

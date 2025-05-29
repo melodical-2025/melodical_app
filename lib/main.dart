@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_core/firebase_core.dart'; // 🔸 추가
 import 'models/user_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -12,7 +13,10 @@ import 'screens/accountedit_screen.dart';
 import 'screens/musicpick_screen.dart';
 import 'screens/musicalpick_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();            // 🔸 필수
+  await Firebase.initializeApp();                      // 🔸 Firebase 초기화
+
   runApp(
     ChangeNotifierProvider(
       create: (_) => UserProvider(),
@@ -33,7 +37,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.orange,
         scaffoldBackgroundColor: const Color(0xFFFFF2DB),
       ),
-      initialRoute: '/splash', // 앱 시작 시 스플래시부터
+      initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
@@ -45,7 +49,6 @@ class MyApp extends StatelessWidget {
         '/accountedit': (context) => const AccounteditScreen(),
         '/musicalpick': (context) => const MusicalpickScreen(),
         '/musicpick': (context) => const MusicpickScreen(),
-
       },
     );
   }

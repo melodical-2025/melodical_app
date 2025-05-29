@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_provider.dart';
 import '../widgets/navigationbar.dart';
 
@@ -36,22 +37,51 @@ class _AccounteditScreenState extends State<AccounteditScreen> {
     super.dispose();
   }
 
-  void _saveChanges() {
+  Future<void> _saveChanges() async {
     final nickname = _nicknameController.text.trim();
-    final email = _emailController.text.trim();
+    final currentPassword = _currentPasswordController.text.trim();
+    final newPassword = _newPasswordController.text.trim();
 
-    if (nickname.isEmpty || email.isEmpty) {
+    if (nickname.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('닉네임과 이메일을 모두 입력해주세요')),
+        const SnackBar(content: Text('닉네임을 입력해주세요')),
       );
       return;
     }
 
-    // 비밀번호 검증은 생략 (필요하면 추가 가능)
-    final user = Provider.of<UserProvider>(context, listen: false);
-    user.setUserInfo(nickname: nickname, email: email);
+    try {
+      final user = FirebaseAuth.instance.currentUser!;
+      final email = user.email!;
 
-    Navigator.pop(context);
+      // 현재 비밀번호로 재인증
+      final cred = EmailAuthProvider.credential(email: email, password: currentPassword);
+      await user.reauthenticateWithCredential(cred);
+
+      // 닉네임 업데이트
+      await user.updateDisplayName(nickname);
+
+      // 비밀번호 변경
+      if (newPassword.isNotEmpty) {
+        await user.updatePassword(newPassword);
+      }
+
+      // Provider 정보 업데이트
+      Provider.of<UserProvider>(context, listen: false).setUserInfo(
+        nickname: nickname,
+        email: email,
+      );
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('정보가 수정되었습니다')),
+      );
+      Navigator.pop(context);
+    } on FirebaseAuthException catch (e) {
+      String message = '정보 수정 실패';
+      if (e.code == 'wrong-password') {
+        message = '현재 비밀번호가 일치하지 않습니다';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    }
   }
 
   @override
@@ -59,9 +89,9 @@ class _AccounteditScreenState extends State<AccounteditScreen> {
     final user = Provider.of<UserProvider>(context);
 
     return Scaffold(
-      backgroundColor: Colors.white, // 배경색 흰색
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: Colors.white, // 앱바 배경색 흰색
+        backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
         title: const Text('회원정보 수정', style: TextStyle(color: textColor)),
@@ -90,11 +120,14 @@ class _AccounteditScreenState extends State<AccounteditScreen> {
 
               _buildInputField(_nicknameController, '닉네임'),
               const SizedBox(height: 12),
-              _buildInputField(_emailController, '이메일 주소'),
+
+              _buildInputField(_emailController, '이메일 주소', readOnly: true), // ✅ 이메일 읽기 전용
               const SizedBox(height: 12),
-              _buildInputField(_currentPasswordController, '기존 비밀번호', obscureText: true),
+
+              _buildInputField(_currentPasswordController, '현재 비밀번호', obscureText: true),
               const SizedBox(height: 12),
-              _buildInputField(_newPasswordController, '수정할 비밀번호', obscureText: true),
+
+              _buildInputField(_newPasswordController, '새 비밀번호 (선택)', obscureText: true),
               const SizedBox(height: 32),
 
               SizedBox(
@@ -121,24 +154,27 @@ class _AccounteditScreenState extends State<AccounteditScreen> {
     );
   }
 
-  Widget _buildInputField(TextEditingController controller, String hint, {bool obscureText = false}) {
+  Widget _buildInputField(TextEditingController controller, String hint,
+      {bool obscureText = false, bool readOnly = false}) {
     return TextField(
       controller: controller,
       obscureText: obscureText,
+      readOnly: readOnly,
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: textColor),
+        hintStyle: TextStyle(color: readOnly ? Colors.grey : textColor),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: readOnly ? const Color(0xFFEFEFEF) : Colors.white,
         border: OutlineInputBorder(
-          borderSide: const BorderSide(color: primaryColor),
+          borderSide: BorderSide(color: readOnly ? Colors.grey : primaryColor),
           borderRadius: BorderRadius.circular(12),
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: textColor, width: 2),
+          borderSide: BorderSide(color: readOnly ? Colors.grey : textColor, width: 2),
           borderRadius: BorderRadius.circular(12),
         ),
       ),
+      style: TextStyle(color: readOnly ? Colors.grey : textColor),
     );
   }
 }

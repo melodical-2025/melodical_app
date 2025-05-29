@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "43271389630",
+    "project_id": "capstonesignupin",
+    "storage_bucket": "capstonesignupin.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:43271389630:android:5f7f53e29fe306f4cd79ef",
+        "android_client_info": {
+          "package_name": "com.example.melodical"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "43271389630-2ljv8geag2dmt1u0j6su1ouvv1bipoum.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.melodical",
+            "certificate_hash": "6efcf3c66de22b9a15029d2c9c441d470dd4281e"
+          }
+        },
+        {
+          "client_id": "43271389630-1tji7j3q93sco7fg8lprbog01cvsl6mj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCqp9wLivIjrgxTScWeR9H7Ak5ot6BQlMI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "43271389630-1tji7j3q93sco7fg8lprbog01cvsl6mj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

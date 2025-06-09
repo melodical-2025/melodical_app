@@ -20,7 +20,9 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login/**", "/css/**", "/js/**").permitAll()
+                        .requestMatchers(
+                                "/", "/login/**", "/css/**", "/js/**", "/api/musicals/fetch" // ✅ 여기에 추가
+                        ).permitAll()
                         .anyRequest().authenticated()
                 )
                 .logout(logout -> logout.logoutSuccessUrl("/"))
@@ -28,7 +30,7 @@ public class SecurityConfig {
                         .userInfoEndpoint(userInfo -> userInfo
                                 .userService(customOAuth2UserService)
                         )
-                        .defaultSuccessUrl("/mypage", true) // 로그인 성공 시 리디렉션 될 경로
+                        .defaultSuccessUrl("/mypage", true)
                 );
 
         return http.build();

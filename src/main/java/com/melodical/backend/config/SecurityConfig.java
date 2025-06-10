@@ -3,6 +3,7 @@ package com.melodical.backend.config;
 import com.melodical.backend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.*;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -35,7 +36,11 @@ public class SecurityConfig {
 
                 // 4) public vs authenticated endpoints
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/error").permitAll()
+
                         .requestMatchers("/auth/**", "/oauth2/**", "/api/token/**").permitAll()
+                        .requestMatchers(HttpMethod.GET,"/api/musicals/fetch", "/api/musicals/rated").permitAll()
+                        .requestMatchers(HttpMethod.POST,"/api/musicals/rate").authenticated()
                         .anyRequest().authenticated()
                 )
 

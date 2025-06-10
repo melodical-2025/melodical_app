@@ -95,7 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: Text(
-              '나의 음악 및 뮤지컬 취향',
+              '나의 음악 취향',
               style: TextStyle(
                 fontSize: 25,
                 fontWeight: FontWeight.bold,

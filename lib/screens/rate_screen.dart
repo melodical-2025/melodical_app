@@ -1,53 +1,11 @@
+// lib/screens/rate_screen.dart
 import 'package:flutter/material.dart';
-import '../models/song.dart';
-import '../services/api_service.dart';
 import '../widgets/navigationbar.dart';
 import '../widgets/ratemusicaltab.dart';
 import '../widgets/ratemusictab.dart';
 
-class RateScreen extends StatefulWidget {
-  const RateScreen({super.key});
-  @override
-  State<RateScreen> createState() => _RateScreenState();
-}
-
-class _RateScreenState extends State<RateScreen> {
-  List<Song> _songs = [];
-  bool _loading = true;
-  String? _error;
-  final Map<String,double> _local = {};
-
-  @override
-  void initState() {
-    super.initState();
-    _loadTop();
-  }
-
-  Future<void> _loadTop() async {
-    setState(() { _loading = true; _error = null; });
-    try {
-      final songs = await ApiService.fetchTopMusic();
-      setState(() { _songs = songs; });
-    } catch (e) {
-      _error = e.toString();
-    } finally {
-      setState(() { _loading = false; });
-    }
-  }
-
-  Future<void> _submitRatings() async {
-    final ratings = _local.entries
-        .map((e) => {'songId': e.key, 'rating': e.value})
-        .toList();
-    try {
-      await ApiService.rateBatchMusic(ratings);
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('저장 완료')));
-    } catch (e) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('저장 실패: $e')));
-    }
-  }
+class RateScreen extends StatelessWidget {
+  const RateScreen({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -109,8 +67,8 @@ class _RateScreenState extends State<RateScreen> {
             const Expanded(
               child: TabBarView(
                 children: [
-                  RateMusicalTab(),  // 뮤지컬 평가 로직을 여기에 분리
-                  RateMusicTab(),    // 음악 평가 로직을 여기에 분리
+                  RateMusicalTab(),  // 뮤지컬 평가를 처리하는 탭
+                  RateMusicTab(),    // 음악 평가를 처리하는 탭
                 ],
               ),
             ),

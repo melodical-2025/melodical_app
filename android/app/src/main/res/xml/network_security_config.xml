@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- 모든 clear‐text 트래픽 허용하려면 아래 <base-config> 를 사용하세요 -->
+    <!--
+    <base-config cleartextTrafficPermitted="true" />
+    -->
+
+    <!-- 특정 도메인만 허용하려면 domain‐config를 사용 -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">10.0.2.2</domain>
+    </domain-config>
+</network-security-config>

@@ -1,26 +1,21 @@
 package com.melodical.backend.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
-@Getter
-@Setter
 @Table(name = "musical")
+@Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
 public class Musical {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column
-    private String title;
-
-    private String theater;
-    private String startDate;
-    private String endDate;
     private String cast;
-    private String runtime;
+    private String endDate;
     private String posterUrl;
+    private String runtime;
+    private String startDate;
+    private String theater;
+    private String title;
 }

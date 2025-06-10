@@ -1,3 +1,4 @@
+import 'package:capstone/models/musical.dart';
 import 'package:flutter/material.dart';
 import '../models/song.dart';
 import '../widgets/navigationbar.dart';
@@ -11,8 +12,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final int likedCount = 5;
-  final int ratedMusicals = 8;
+  final int likedCount = 0;
+
+  List<Musical> _ratedMusicals = [];
+  bool _loadingMusicals = true;
+  String? _errorMusicals;
 
   List<Song> _ratedSongs = [];
   bool _loadingSongs = true;
@@ -22,6 +26,28 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     _loadRatedSongs();
+    _loadRatedMusicals();
+  }
+
+  Future<void> _loadRatedMusicals() async{
+    setState(() {
+      _loadingMusicals = true;
+      _errorMusicals = null;
+    });
+    try{
+      final list = await ApiService.fetchRatedMusicals();
+      setState(() {
+        _ratedMusicals = list;
+      });
+    }catch (e){
+      setState(() {
+        _errorMusicals = e.toString();
+      });
+    }finally{
+      setState(() {
+        _loadingMusicals = false;
+      });
+    }
   }
 
   Future<void> _loadRatedSongs() async {
@@ -49,13 +75,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final int ratedSongs = _ratedSongs.length;
-
-    final List<Map<String, dynamic>> recommendedMusicals = [
-      {'title': '도리안 그레이', 'image': 'assets/poster.png'},
-      {'title': '모리스', 'image': 'assets/poster.png'},
-      {'title': '알라딘', 'image': 'assets/poster.png'},
-      {'title': '매디슨 카운티의 다리', 'image': 'assets/poster.png'},
-    ];
+    final int ratedMusicals = _ratedMusicals.length;
+    final int likedcounts = _ratedMusicals.length + _ratedSongs.length;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -152,61 +173,68 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 24),
 
-          // 추천 뮤지컬
-          Padding(
-            padding: const EdgeInsets.only(left: 16.0, bottom: 10.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '당신의 취향에 꼭 맞는 뮤지컬',
-                  style: TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                SizedBox(
-                  height: 240,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: recommendedMusicals.length,
-                    itemBuilder: (context, index) {
-                      final musical = recommendedMusicals[index];
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 18),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.asset(
-                                musical['image'],
-                                width: 130,
-                                height: 180,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            SizedBox(
-                              width: 100,
-                              child: Text(
-                                musical['title'],
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
+          // ─── '나의 뮤지컬 취향' 타이틀 ────────────────────
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            child: Text(
+              '나의 뮤지컬 취향',
+              style: TextStyle(
+                fontSize: 25,
+                fontWeight: FontWeight.bold,
+                color: Colors.black,
+              ),
+            ),
+          ),
+
+          // ─── 나의 평가한 뮤지컬 리스트 ─────────────────
+          SizedBox(
+            height: 150,
+            child: _loadingMusicals
+                ? const Center(child: CircularProgressIndicator())
+                : _errorMusicals != null
+                ? Center(child: Text('에러: $_errorMusicals'))
+                : ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              itemCount: _ratedMusicals.length,
+              itemBuilder: (context, index) {
+                final m = _ratedMusicals[index];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 18.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          m.posterUrl,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) => Container(
+                            width: 100,
+                            height: 100,
+                            color: Colors.grey.shade200,
+                            child: const Icon(Icons.broken_image),
+                          ),
                         ),
-                      );
-                    },
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 100,
+                        child: Text(
+                          m.title,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                );
+              },
             ),
           ),
 
@@ -223,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   assetPath: null,
                   label1: '찜한',
                   label2: '뮤지컬',
-                  count: likedCount,
+                  count: likedcounts,
                   textColor: Colors.black,
                 ),
                 buildStatBoxWidget(

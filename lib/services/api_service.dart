@@ -1,6 +1,7 @@
 // lib/services/api_service.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../models/musical.dart';
 import '../models/song.dart';
 import 'token_storage.dart';
 
@@ -143,6 +144,47 @@ class ApiService {
 
     if (resp.statusCode != 200) {
       throw Exception('평점 일괄 저장 실패: ${resp.statusCode}');
+    }
+  }
+
+  /// 전체 뮤지컬 목록 불러오기
+  static Future<List<Musical>> fetchAllMusicals() async {
+    final resp = await get('/api/musicals/fetch');
+    if (resp.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(utf8.decode(resp.bodyBytes));
+      return data.map((e) => Musical.fromJson(e)).toList();
+    }
+    throw Exception('뮤지컬 목록 불러오기 실패: ${resp.statusCode}');
+  }
+
+  static Future<List<Musical>> fetchRatedMusicals() async {
+    final userId = await _ts.getUserId();
+    final resp = await get('/api/musicals/rated', queryParameters: {
+      'userId': userId.toString(),
+    });
+    if (resp.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(utf8.decode(resp.bodyBytes));
+      return data.map((e) => Musical.fromJson(e)).toList();
+    }
+    throw Exception('평가된 뮤지컬 목록 불러오기 실패: ${resp.statusCode}');
+  }
+
+  /// 뮤지컬 평점 일괄 저장
+  static Future<void> rateBatchMusical(
+      List<Map<String, dynamic>> ratingsPayload) async {
+    final userId = await _ts.getUserId();
+    if (userId == null) throw Exception('로그인 정보가 없습니다.');
+
+    final resp = await post(
+      '/api/musicals/rate',
+      {
+        'userId': userId,
+        'type': 'musical',
+        'ratings': ratingsPayload,
+      },
+    );
+    if (resp.statusCode != 200) {
+      throw Exception('뮤지컬 평점 저장 실패: \${resp.statusCode}');
     }
   }
 }

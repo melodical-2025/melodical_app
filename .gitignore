@@ -35,3 +35,12 @@ out/
 
 ### VS Code ###
 .vscode/
+
+# macOS 메타파일
+.DS_Store
+
+# Flutter/Android 환경별 파일
+/.dart_tool/
+/android/local.properties
+/ios/Pods/
+/macos/Podfile

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:kakao_flutter_sdk_auth/kakao_flutter_sdk_auth.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_core/firebase_core.dart'; // 🔸 추가
+import 'package:google_fonts/google_fonts.dart';
+
 import 'models/user_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -14,8 +16,9 @@ import 'screens/musicpick_screen.dart';
 import 'screens/musicalpick_screen.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();            // 🔸 필수
-  await Firebase.initializeApp();                      // 🔸 Firebase 초기화
+  WidgetsFlutterBinding.ensureInitialized();
+
+  KakaoSdk.init(nativeAppKey: 'f44e738db2fe6cbe4d9e6ec86bd0b8d2');
 
   runApp(
     ChangeNotifierProvider(
@@ -36,6 +39,9 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.orange,
         scaffoldBackgroundColor: const Color(0xFFFFF2DB),
+        textTheme: GoogleFonts.nanumGothicTextTheme(
+          Theme.of(context).textTheme,
+        ),
       ),
       initialRoute: '/splash',
       routes: {

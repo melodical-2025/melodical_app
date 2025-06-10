@@ -9,13 +9,14 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "user")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column(nullable = false ,unique = true)
     private String email;
 
     private String password; // 소셜 로그인 사용자는 null 또는 "" 가능
@@ -23,6 +24,8 @@ public class User {
     private String name;
 
     private String role; // ex) "USER", "ADMIN"
+
+    private String provider;
 
     // 소셜 로그인 사용자 정보 갱신 시 사용
     public User update(String name) {

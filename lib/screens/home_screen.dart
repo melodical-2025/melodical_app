@@ -1,14 +1,54 @@
 import 'package:flutter/material.dart';
+import '../models/song.dart';
 import '../widgets/navigationbar.dart';
+import '../services/api_service.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final int likedCount = 5;
+  final int ratedMusicals = 8;
+
+  List<Song> _ratedSongs = [];
+  bool _loadingSongs = true;
+  String? _errorSongs;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRatedSongs();
+  }
+
+  Future<void> _loadRatedSongs() async {
+    setState(() {
+      _loadingSongs = true;
+      _errorSongs = null;
+    });
+    try {
+      // DB에서 현재 userId에 해당하는 평가된 음악만 가져오는 API 호출
+      final songs = await ApiService.fetchRatedMusicByUser();
+      setState(() {
+        _ratedSongs = songs;
+      });
+    } catch (e) {
+      setState(() {
+        _errorSongs = e.toString();
+      });
+    } finally {
+      setState(() {
+        _loadingSongs = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    int likedCount = 5;
-    int ratedMusicals = 8;
-    int ratedSongs = 12;
+    final int ratedSongs = _ratedSongs.length;
 
     final List<Map<String, dynamic>> recommendedMusicals = [
       {'title': '도리안 그레이', 'image': 'assets/poster.png'},
@@ -22,6 +62,7 @@ class HomeScreen extends StatelessWidget {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 앱 바
           Container(
             height: 110,
             decoration: BoxDecoration(
@@ -31,7 +72,6 @@ class HomeScreen extends StatelessWidget {
                   color: const Color(0xFFE17951),
                   blurRadius: 4,
                   offset: const Offset(5, 0),
-                  spreadRadius: 0,
                 ),
               ],
             ),
@@ -51,6 +91,7 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
+          // '나의 음악 및 뮤지컬 취향' 타이틀
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: Text(
@@ -63,9 +104,55 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 210),
+          // 나의 음악 취향 리스트
+          SizedBox(
+            height: 150,
+            child: _loadingSongs
+                ? const Center(child: CircularProgressIndicator())
+                : _errorSongs != null
+                ? Center(child: Text('에러: \$_errorSongs'))
+                : ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              itemCount: _ratedSongs.length,
+              itemBuilder: (context, index) {
+                final song = _ratedSongs[index];
+                return Padding(
+                  padding: const EdgeInsets.only(right: 18.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.network(
+                          song.artworkUrl,
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 100,
+                        child: Text(
+                          song.title,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
 
-          // 추천 뮤지컬 텍스트 + 슬라이딩 리스트
+          const SizedBox(height: 24),
+
+          // 추천 뮤지컬
           Padding(
             padding: const EdgeInsets.only(left: 16.0, bottom: 10.0),
             child: Column(
@@ -125,6 +212,7 @@ class HomeScreen extends StatelessWidget {
 
           const Spacer(),
 
+          // 통계 박스
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 20),
             child: Row(
@@ -159,12 +247,11 @@ class HomeScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavBar(currentIndex: 0),
+      bottomNavigationBar: const BottomNavBar(currentIndex: 0),
     );
   }
 
   Widget buildStatBoxWidget({
-    String? emoji,
     IconData? icon,
     String? assetPath,
     required String label1,
@@ -194,12 +281,7 @@ class HomeScreen extends StatelessWidget {
               icon,
               color: Colors.red,
               size: 25,
-            )
-          else if (emoji != null)
-              Text(
-                emoji,
-                style: const TextStyle(fontSize: 20),
-              ),
+            ),
           const SizedBox(width: 8),
           Flexible(
             child: Text(
@@ -217,3 +299,4 @@ class HomeScreen extends StatelessWidget {
     );
   }
 }
+

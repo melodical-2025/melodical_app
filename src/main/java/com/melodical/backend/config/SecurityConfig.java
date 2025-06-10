@@ -1,35 +1,50 @@
 package com.melodical.backend.config;
 
-import com.melodical.backend.service.CustomOAuth2UserService;
+import com.melodical.backend.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.*;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CustomOAuth2UserService customOAuth2UserService;
+    private final JwtAuthenticationFilter jwtAuthFilter;
+    private final DaoAuthenticationProvider authProvider;
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // 1) disable CSRF, form-login & http-basic with lambdas
                 .csrf(csrf -> csrf.disable())
+                .formLogin(login -> login.disable())
+                .httpBasic(basic -> basic.disable())
+
+                // 2) use your global CorsFilter bean
+                .cors(Customizer.withDefaults())
+
+                // 3) stateless sessions (JWT only)
+                .sessionManagement(sm -> sm
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+
+                // 4) public vs authenticated endpoints
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login/**", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/auth/**", "/oauth2/**", "/api/token/**").permitAll()
                         .anyRequest().authenticated()
                 )
-                .logout(logout -> logout.logoutSuccessUrl("/"))
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo
-                                .userService(customOAuth2UserService)
-                        )
-                        .defaultSuccessUrl("/mypage", true) // 로그인 성공 시 리디렉션 될 경로
-                );
+
+                // 5) register your DAO provider for AuthenticationManager
+                .authenticationProvider(authProvider)
+
+                // 6) insert your JWT filter before Spring’s username/password filter
+                .addFilterBefore(jwtAuthFilter,
+                        UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

@@ -1,192 +1,146 @@
+// lib/screens/accountedit_screen.dart
+
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import '../models/user_provider.dart';
-import '../widgets/navigationbar.dart';
+import '../services/api_service.dart';
+import '../services/token_storage.dart';
 
 class AccounteditScreen extends StatefulWidget {
   const AccounteditScreen({super.key});
-
   @override
   State<AccounteditScreen> createState() => _AccounteditScreenState();
 }
 
 class _AccounteditScreenState extends State<AccounteditScreen> {
-  late TextEditingController _nicknameController;
-  late TextEditingController _emailController;
-  final TextEditingController _currentPasswordController = TextEditingController();
-  final TextEditingController _newPasswordController = TextEditingController();
+  final _nickCtrl    = TextEditingController();
+  final _currentCtrl = TextEditingController();
+  final _newCtrl     = TextEditingController();
+  bool _isLoading = false;
 
-  static const backgroundColor = Colors.white;
-  static const primaryColor = Color(0xFFFFAD75);
+  static const bgColor   = Colors.white;
+  static const primary   = Color(0xFFFFAD75);
   static const textColor = Color(0xFFE17951);
-  static const secondaryColor = Color(0xFFFFD9A3);
-
-  @override
-  void initState() {
-    super.initState();
-    final user = Provider.of<UserProvider>(context, listen: false);
-    _nicknameController = TextEditingController(text: user.nickname);
-    _emailController = TextEditingController(text: user.email);
-  }
+  static const secondary = Color(0xFFFFD9A3);
 
   @override
   void dispose() {
-    _nicknameController.dispose();
-    _emailController.dispose();
-    _currentPasswordController.dispose();
-    _newPasswordController.dispose();
+    _nickCtrl.dispose();
+    _currentCtrl.dispose();
+    _newCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _saveChanges() async {
-    final nickname = _nicknameController.text.trim();
-    final currentPassword = _currentPasswordController.text.trim();
-    final newPassword = _newPasswordController.text.trim();
+    final nick = _nickCtrl.text.trim();
+    final curr = _currentCtrl.text.trim();
+    final ne   = _newCtrl.text.trim();
 
-    if (nickname.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('닉네임을 입력해주세요')),
-      );
+    if (nick.isEmpty) {
+      _showSnack('닉네임을 입력해주세요');
       return;
     }
 
-    try {
-      final user = FirebaseAuth.instance.currentUser!;
-      final email = user.email!;
+    setState(() => _isLoading = true);
 
-      final cred = EmailAuthProvider.credential(email: email, password: currentPassword);
-      await user.reauthenticateWithCredential(cred);
-
-      await user.updateDisplayName(nickname);
-
-      if (newPassword.isNotEmpty) {
-        await user.updatePassword(newPassword);
-      }
-
-      Provider.of<UserProvider>(context, listen: false).setUserInfo(
-        nickname: nickname,
-        email: email,
-      );
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('정보가 수정되었습니다')),
-      );
-      Navigator.pop(context);
-    } on FirebaseAuthException catch (e) {
-      String message = '정보 수정 실패';
-      if (e.code == 'wrong-password') {
-        message = '현재 비밀번호가 일치하지 않습니다';
-      }
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    // 1) 닉네임 업데이트
+    final resp1 = await ApiService.post('/api/users/update-nickname', {
+      'nickname': nick,
+    });
+    if (resp1.statusCode != 200) {
+      _showSnack('닉네임 변경 실패');
+      setState(() => _isLoading = false);
+      return;
     }
+
+    // 2) 비밀번호 변경 (선택)
+    if (curr.isNotEmpty && ne.isNotEmpty) {
+      final resp2 = await ApiService.post('/api/users/change-password', {
+        'currentPassword': curr,
+        'newPassword': ne,
+      });
+      if (resp2.statusCode != 200) {
+        _showSnack('비밀번호 변경 실패');
+        setState(() => _isLoading = false);
+        return;
+      }
+    }
+
+    _showSnack('정보가 수정되었습니다');
+    setState(() => _isLoading = false);
+    Navigator.pop(context);
   }
 
-  InputDecoration _inputDecoration(String label, {bool readOnly = false}) {
-    return InputDecoration(
-      labelText: label,
-      filled: true,
-      fillColor: readOnly ? const Color(0xFFEFEFEF) : Colors.white,
-      labelStyle: TextStyle(color: readOnly ? Colors.grey : primaryColor),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: readOnly ? Colors.grey : primaryColor),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: BorderSide(color: readOnly ? Colors.grey : primaryColor, width: 2),
-      ),
-    );
+  void _showSnack(String msg) {
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(msg)));
   }
 
-  Widget _textField(TextEditingController controller, String label,
-      {bool obscure = false, bool readOnly = false}) {
-    return TextField(
-      controller: controller,
-      obscureText: obscure,
-      readOnly: readOnly,
-      decoration: _inputDecoration(label, readOnly: readOnly),
-      style: TextStyle(color: readOnly ? Colors.grey : textColor),
-    );
-  }
+  InputDecoration _decor(String label,{bool readOnly=false})=>
+      InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: readOnly? Colors.grey[100] : Colors.white,
+        labelStyle: TextStyle(color: readOnly? Colors.grey : primary),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: readOnly? Colors.grey : primary),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: primary, width: 2),
+          borderRadius: BorderRadius.circular(8),
+        ),
+      );
 
   @override
-  Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context);
-
-    return Scaffold(
-      backgroundColor: backgroundColor,
-      appBar: AppBar(
-        backgroundColor: backgroundColor,
-        elevation: 0,
-        centerTitle: true,
-        title: const Text('회원정보 수정', style: TextStyle(color: textColor)),
-        iconTheme: const IconThemeData(color: textColor),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const SizedBox(height: 36),
-              const CircleAvatar(
-                radius: 40,
-                backgroundImage: AssetImage('assets/logo.png'),
-              ),
-              const SizedBox(height: 12),
-              Text(user.nickname, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              Text(user.email, style: const TextStyle(color: Colors.black54)),
-              const SizedBox(height: 32),
-
-              _textField(_nicknameController, '닉네임'),
-              const SizedBox(height: 12),
-              _textField(_emailController, '이메일 주소', readOnly: true),
-              const SizedBox(height: 12),
-              _textField(_currentPasswordController, '현재 비밀번호', obscure: true),
-              const SizedBox(height: 12),
-              _textField(_newPasswordController, '새 비밀번호 (선택)', obscure: true),
-              const SizedBox(height: 30),
-
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _saveChanges,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor, // ← LoginScreen과 동일
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16), // ← 둥근 테두리 통일
-                    ),
-                  ),
-                  child: Stack(
-                    children: [
-                      Text(
-                        '저장',
-                        style: TextStyle(
-                          fontSize: 16,
-                          foreground: Paint()
-                            ..style = PaintingStyle.stroke
-                            ..strokeWidth = 1.5
-                            ..color = const Color(0xFFFFE5B6), // stroke 효과
-                        ),
-                      ),
-                      const Text(
-                        '저장',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: textColor,
-                        ),
-                      ),
-                    ],
-                  ),
+  Widget build(BuildContext ctx) => Scaffold(
+    backgroundColor: bgColor,
+    appBar: AppBar(
+      backgroundColor: bgColor,
+      elevation: 0,
+      centerTitle: true,
+      title: const Text('회원정보 수정', style: TextStyle(color: textColor)),
+      iconTheme: const IconThemeData(color: textColor),
+    ),
+    body: Padding(
+      padding: const EdgeInsets.symmetric(horizontal:24, vertical:20),
+      child: Column(
+        children:[
+          TextField(
+            controller: _nickCtrl,
+            decoration: _decor('닉네임'),
+            style: TextStyle(color: textColor),
+          ),
+          const SizedBox(height:12),
+          TextField(
+            controller: _currentCtrl,
+            decoration: _decor('현재 비밀번호'),
+            obscureText: true,
+            style: TextStyle(color: textColor),
+          ),
+          const SizedBox(height:12),
+          TextField(
+            controller: _newCtrl,
+            decoration: _decor('새 비밀번호 (선택)'),
+            obscureText: true,
+            style: TextStyle(color: textColor),
+          ),
+          const SizedBox(height:30),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: _isLoading? null : _saveChanges,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: primary,
+                padding: const EdgeInsets.symmetric(vertical:14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              const SizedBox(height: 40),
-            ],
+              child: const Text('저장', style: TextStyle(fontSize:16)),
+            ),
           ),
-        ),
+        ],
       ),
-      bottomNavigationBar: BottomNavBar(currentIndex: 3),
-    );
-  }
+    ),
+  );
 }

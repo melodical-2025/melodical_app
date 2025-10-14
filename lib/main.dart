@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:kakao_flutter_sdk_auth/kakao_flutter_sdk_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'models/user_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -14,6 +13,7 @@ import 'screens/account_screen.dart';
 import 'screens/accountedit_screen.dart';
 import 'screens/musicpick_screen.dart';
 import 'screens/musicalpick_screen.dart';
+import 'screens/detail_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
           Theme.of(context).textTheme,
         ),
       ),
-      initialRoute: '/splash',
+      initialRoute: '/detail',
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
@@ -55,6 +55,7 @@ class MyApp extends StatelessWidget {
         '/accountedit': (context) => const AccounteditScreen(),
         '/musicalpick': (context) => const MusicalpickScreen(),
         '/musicpick': (context) => const MusicpickScreen(),
+        '/detail': (context) => const DetailScreen(),
       },
     );
   }

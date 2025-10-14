@@ -1,15 +1,5 @@
-// lib/screens/signup_screen.dart
-
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_naver_login/interface/types/naver_login_status.dart';
-import 'package:google_sign_in/google_sign_in.dart';
-import 'package:kakao_flutter_sdk_user/kakao_flutter_sdk_user.dart';
-import 'package:kakao_flutter_sdk_auth/kakao_flutter_sdk_auth.dart';
-import 'package:flutter_naver_login/flutter_naver_login.dart';
-
-import '../services/api_service.dart';
-import '../services/token_storage.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -45,8 +35,17 @@ class _SignupScreenState extends State<SignupScreen> {
     final pwd     = _passwordController.text.trim();
     final confirm = _confirmPasswordController.text.trim();
 
+    // 기본 유효성
     if (nick.isEmpty || email.isEmpty || pwd.isEmpty || confirm.isEmpty) {
       _showSnack('모든 항목을 입력해주세요');
+      return;
+    }
+    if (!_looksLikeEmail(email)) {
+      _showSnack('유효한 이메일 주소를 입력해주세요');
+      return;
+    }
+    if (pwd.length < 8) {
+      _showSnack('비밀번호는 8자 이상이어야 합니다');
       return;
     }
     if (pwd != confirm) {
@@ -55,94 +54,75 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     setState(() => _isLoading = true);
-    final resp = await ApiService.signup(email, pwd, nick);
+    try {
+      final supa = Supabase.instance.client;
+      final auth = supa.auth;
 
-    if (resp.statusCode == 200 || resp.statusCode == 201) {
-      // 백엔드가 바로 JWT를 리턴한다면
-      // final data = jsonDecode(resp.body);
-      // await TokenStorage().save(data['token']);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('회원가입 완료!')),
+      // 1) 회원가입 (닉네임은 user metadata에 저장)
+      final res = await auth.signUp(
+        email: email,
+        password: pwd,
+        data: {'nickname': nick},
       );
-      Navigator.pushReplacementNamed(context, '/musicalpick');
-    } else {
-      final error = jsonDecode(resp.body)['message'] ?? '회원가입 오류';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+
+      // 2) profiles 테이블에도 동기화 (id = auth.users.id)
+      final uid = res.user?.id ?? auth.currentUser?.id;
+      if (uid != null) {
+        await supa.from('profiles').upsert({'id': uid, 'nickname': nick});
+      }
+
+      // 3) 안내 및 이동
+      if (res.user != null && (res.user!.emailConfirmedAt == null)) {
+        _showSnack('회원가입 완료! 이메일 인증 링크를 확인해주세요.');
+      } else {
+        _showSnack('회원가입 완료! 로그인해주세요.');
+      }
+
+      if (!mounted) return;
+      Navigator.pushReplacementNamed(context, '/login');
+    } on AuthException catch (e) {
+      _showSnack(_translateError(e.message));
+    } catch (e) {
+      _showSnack('회원가입 오류: $e');
+    } finally {
+      setState(() => _isLoading = false);
     }
-    setState(() => _isLoading = false);
   }
 
-  Future<void> _signInWithGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      final googleUser = await GoogleSignIn(scopes: ['email']).signIn();
-      if (googleUser == null) throw '취소됨';
-      final auth = await googleUser.authentication;
-      final resp = await ApiService.post('/auth/login/google', {
-        'token': auth.idToken,
-      });
-      if (resp.statusCode == 200) {
-        final data = jsonDecode(resp.body);
-        await TokenStorage().save(data['token']);
-        Navigator.pushReplacementNamed(context, '/musicalpick');
-      } else {
-        throw 'Google 로그인 실패 (${resp.statusCode})';
-      }
-    } catch (e) {
-      _showSnack(e.toString());
-    }
-    setState(() => _isLoading = false);
+  // 소셜은 추후 연동
+  void _notReady(String provider) {
+    _showSnack('$provider 회원가입/로그인은 나중에 연결할게요 (지금은 이메일/비번만)');
   }
 
-  Future<void> _signInWithKakao() async {
-    setState(() => _isLoading = true);
-    try {
-      OAuthToken token = await (await isKakaoTalkInstalled()
-          ? UserApi.instance.loginWithKakaoTalk()
-          : UserApi.instance.loginWithKakaoAccount());
-      final resp = await ApiService.post('/auth/login/kakao', {
-        'token': token.accessToken,
-      });
-      if (resp.statusCode == 200) {
-        final data = jsonDecode(resp.body);
-        await TokenStorage().save(data['token']);
-        Navigator.pushReplacementNamed(context, '/musicalpick');
-      } else {
-        throw '카카오 로그인 실패 (${resp.statusCode})';
-      }
-    } catch (e) {
-      _showSnack(e.toString());
-    }
-    setState(() => _isLoading = false);
+  // ========= 헬퍼 =========
+
+  bool _looksLikeEmail(String v) {
+    // 아주 가벼운 형태 체크 (정교할 필요 X)
+    return RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(v);
   }
 
-  Future<void> _signInWithNaver() async {
-    setState(() => _isLoading = true);
-    try {
-      final res = await FlutterNaverLogin.logIn();
-      if (res.status != NaverLoginStatus.loggedIn) throw '네이버 로그인 취소/실패';
-      final resp = await ApiService.post('/auth/login/naver', {
-        'token': res.accessToken,
-      });
-      if (resp.statusCode == 200) {
-        final data = jsonDecode(resp.body);
-        await TokenStorage().save(data['token']);
-        Navigator.pushReplacementNamed(context, '/musicalpick');
-      } else {
-        throw '네이버 로그인 실패 (${resp.statusCode})';
-      }
-    } catch (e) {
-      _showSnack(e.toString());
+  String _translateError(String? msg) {
+    if (msg == null || msg.isEmpty) return '알 수 없는 오류가 발생했습니다.';
+    if (msg.contains('User already registered')) {
+      return '이미 가입된 이메일입니다. 로그인하거나 비밀번호를 재설정하세요.';
     }
-    setState(() => _isLoading = false);
+    if (msg.contains('Email not confirmed')) {
+      return '이메일 인증이 완료되지 않았습니다. 메일함을 확인해주세요.';
+    }
+    if (msg.contains('Invalid email') || msg.contains('invalid email')) {
+      return '유효한 이메일 주소를 입력해주세요.';
+    }
+    if (msg.contains('Password should be at least')) {
+      return '비밀번호 길이가 너무 짧습니다.';
+    }
+    if (msg.contains('Rate limit') || msg.contains('Too many requests')) {
+      return '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.';
+    }
+    return '오류가 발생했습니다: $msg';
   }
 
   void _showSnack(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg)),
-    );
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   InputDecoration _inputDecoration(String label) => InputDecoration(
@@ -163,10 +143,7 @@ class _SignupScreenState extends State<SignupScreen> {
   Widget _socialIcon(String assetPath, VoidCallback onTap) {
     return GestureDetector(
       onTap: _isLoading ? null : onTap,
-      child: CircleAvatar(
-        radius: 20,
-        backgroundImage: AssetImage(assetPath),
-      ),
+      child: CircleAvatar(radius: 20, backgroundImage: AssetImage(assetPath)),
     );
   }
 
@@ -214,7 +191,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
               TextField(
                 controller: _passwordController,
-                decoration: _inputDecoration('비밀번호'),
+                decoration: _inputDecoration('비밀번호 (8자 이상)'),
                 obscureText: true,
                 style: const TextStyle(color: primaryColor),
               ),
@@ -252,13 +229,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             ..color = const Color(0xFFFFE5B6),
                         ),
                       ),
-                      const Text(
-                        '회원가입',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: textColor,
-                        ),
-                      ),
+                      const Text('회원가입', style: TextStyle(fontSize: 16, color: textColor)),
                     ],
                   ),
                 ),
@@ -267,28 +238,9 @@ class _SignupScreenState extends State<SignupScreen> {
 
               Row(
                 children: const [
-                  Expanded(
-                    child: Divider(
-                      thickness: 1,
-                      color: secondaryColor,
-                      endIndent: 10,
-                    ),
-                  ),
-                  Text(
-                    '간편 회원가입',
-                    style: TextStyle(
-                      color: textColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(
-                      thickness: 1,
-                      color: secondaryColor,
-                      indent: 10,
-                    ),
-                  ),
+                  Expanded(child: Divider(thickness: 1, color: secondaryColor, endIndent: 10)),
+                  Text('간편 회원가입', style: TextStyle(color: textColor, fontSize: 14, fontWeight: FontWeight.w500)),
+                  Expanded(child: Divider(thickness: 1, color: secondaryColor, indent: 10)),
                 ],
               ),
               const SizedBox(height: 16),
@@ -296,11 +248,11 @@ class _SignupScreenState extends State<SignupScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _socialIcon('assets/google.png', _signInWithGoogle),
+                  _socialIcon('assets/google.png', () => _notReady('Google')),
                   const SizedBox(width: 20),
-                  _socialIcon('assets/naver.png', _signInWithNaver),
+                  _socialIcon('assets/naver.png', () => _notReady('Naver')),
                   const SizedBox(width: 20),
-                  _socialIcon('assets/kakao.png', _signInWithKakao),
+                  _socialIcon('assets/kakao.png', () => _notReady('Kakao')),
                 ],
               ),
             ],

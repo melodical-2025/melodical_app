@@ -11,12 +11,20 @@ import 'screens/search_screen.dart';
 import 'screens/rate_screen.dart';
 import 'screens/account_screen.dart';
 import 'screens/accountedit_screen.dart';
+import 'screens/accountmypage_screen.dart';
 import 'screens/musicpick_screen.dart';
 import 'screens/musicalpick_screen.dart';
 import 'screens/detail_screen.dart';
+// import 'package:firebase_core/firebase_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  //await Firebase.initializeApp();
+  await Supabase.initialize(
+    url: 'https://nqzplkpbcxasadrcqdaz.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5xenBsa3BiY3hhc2FkcmNxZGF6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA0NzU1MDksImV4cCI6MjA3NjA1MTUwOX0.3pAoEcBnbspwERErcYeqcT6ve33VkwUajSKjLRSkmpQ',
+  );
 
   KakaoSdk.init(nativeAppKey: 'f44e738db2fe6cbe4d9e6ec86bd0b8d2');
 
@@ -43,7 +51,7 @@ class MyApp extends StatelessWidget {
           Theme.of(context).textTheme,
         ),
       ),
-      initialRoute: '/detail',
+      initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
@@ -53,6 +61,7 @@ class MyApp extends StatelessWidget {
         '/ratemusical': (context) => const RateScreen(),
         '/account': (context) => const AccountScreen(),
         '/accountedit': (context) => const AccounteditScreen(),
+        '/accountmypage': (context) => const AccountMyPageScreen(),
         '/musicalpick': (context) => const MusicalpickScreen(),
         '/musicpick': (context) => const MusicpickScreen(),
         '/detail': (context) => const DetailScreen(),

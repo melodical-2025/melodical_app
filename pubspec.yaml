@@ -33,6 +33,10 @@ dependencies:
 
   google_fonts: ^4.0.4
 
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.0
+
+  supabase_flutter: ^2.5.10
 
   http: ^0.13.5
   flutter_secure_storage: ^8.0.0

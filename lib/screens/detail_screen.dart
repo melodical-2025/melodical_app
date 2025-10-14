@@ -422,17 +422,33 @@ class _DetailScreenState extends State<DetailScreen> {
               }),
             ),
 
-            Center(
-              child: TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => BoardScreen()),
-                  );
-                },
-                child: const Text('모두보기'),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 5.0),
+              child: SizedBox(
+                width: double.infinity, // 화면 전체 가로
+                height: 30, // 높이 줄임
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.grey.shade300, // 회색 배경
+                    foregroundColor: Colors.black, // 글씨 색
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4), // 모서리 덜 둥글게
+                    ),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => BoardScreen()),
+                    );
+                  },
+                  child: const Text(
+                    '모두보기',
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
             ),
+
 
 
             // 연관 작품 추천

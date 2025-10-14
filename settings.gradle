@@ -1,1 +1,9 @@
 rootProject.name = 'backend'
+
+pluginManagement {
+    repositories { google(); mavenCentral(); gradlePluginPortal(); maven { url "https://repo1.maven.org/maven2/" } }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories { google(); mavenCentral(); maven { url "https://repo1.maven.org/maven2/" } }
+}

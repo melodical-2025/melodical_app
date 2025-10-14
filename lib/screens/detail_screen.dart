@@ -3,7 +3,6 @@ import '../models/musical.dart';
 import 'board_screen.dart';
 import 'post_screen.dart';
 
-
 class DetailScreen extends StatelessWidget {
   const DetailScreen({Key? key}) : super(key: key);
 
@@ -21,10 +20,10 @@ class DetailScreen extends StatelessWidget {
     );
 
     final posts = [
-      '게시글 1 내용',
-      '게시글 2 내용',
-      '게시글 3 내용',
-      '게시글 4 내용',
+      {'title': '게시글 1', 'content': '내용 일부...', 'author': '작성자1', 'date': '2025-10-14'},
+      {'title': '게시글 2', 'content': '내용 일부...', 'author': '작성자2', 'date': '2025-10-13'},
+      {'title': '게시글 3', 'content': '내용 일부...', 'author': '작성자3', 'date': '2025-10-12'},
+      {'title': '게시글 4', 'content': '내용 일부...', 'author': '작성자4', 'date': '2025-10-11'},
     ];
 
     return Scaffold(
@@ -77,6 +76,7 @@ class DetailScreen extends StatelessWidget {
                 ],
               ),
             ),
+
 
             const SizedBox(height: 16),
 
@@ -158,11 +158,11 @@ class DetailScreen extends StatelessWidget {
                       Text('${dummyMusical.startDate} ~ ${dummyMusical.endDate}'),
                     ],
                   ),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),
 
-            const SizedBox(height: 16),
             Divider(color: Colors.grey.shade400),
 
             // 예매처 바로가기
@@ -244,25 +244,43 @@ class DetailScreen extends StatelessWidget {
             const SizedBox(height: 16),
             Divider(color: Colors.grey.shade400),
 
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
-              child: Text(
-                '작품게시판',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            // 작품게시판 + 작성하기
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    '작품게시판',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const PostScreen(isEditing: true),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      '작성하기',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.blue,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
 
             Column(
               children: List.generate(3, (index) {
-                final dummyPost = {
-                  'title': '게시글 제목 $index',
-                  'content': '게시글 내용 일부를 간략하게 보여줌...',
-                  'author': '작성자 $index',
-                  'date': '2025-10-14',
-                };
+                final dummyPost = posts[index];
                 return GestureDetector(
                   onTap: () {
-                    // 나중에 실제 post 페이지로 이동
                     Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -305,15 +323,11 @@ class DetailScreen extends StatelessWidget {
               }),
             ),
 
-            // 모두보기 버튼
             TextButton(
               onPressed: () {
-                // 전체 게시판 페이지로 이동
                 Navigator.push(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => BoardScreen(),
-                  ),
+                  MaterialPageRoute(builder: (context) => BoardScreen()),
                 );
               },
               child: const Text('모두보기'),
@@ -374,4 +388,3 @@ class DetailScreen extends StatelessWidget {
     );
   }
 }
-

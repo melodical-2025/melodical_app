@@ -1,30 +1,47 @@
 import 'package:flutter/material.dart';
 
 class PostScreen extends StatelessWidget {
-  final Map<String, String> post;
+  final Map<String, String>? post; // null이면 작성 모드
+  final bool isEditing;
 
-  const PostScreen({super.key, required this.post});
+  const PostScreen({Key? key, this.post, this.isEditing = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final titleController = TextEditingController(text: post?['title'] ?? '');
+    final contentController = TextEditingController(text: post?['content'] ?? '');
+
     return Scaffold(
-      appBar: AppBar(title: Text(post['title']!)),
+      appBar: AppBar(
+        title: Text(isEditing ? '게시글 작성' : (post?['title'] ?? '게시글')),
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              post['title']!,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '작성자: ${post['author']} | 작성일: ${post['date']}',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+            TextField(
+              controller: titleController,
+              decoration: const InputDecoration(labelText: '제목'),
+              readOnly: !isEditing,
             ),
             const SizedBox(height: 16),
-            Text(post['content']!),
+            Expanded(
+              child: TextField(
+                controller: contentController,
+                decoration: const InputDecoration(labelText: '내용'),
+                maxLines: null,
+                expands: true,
+                readOnly: !isEditing,
+              ),
+            ),
+            if (isEditing)
+              ElevatedButton(
+                onPressed: () {
+                  // 작성 후 저장 로직 (서버 연동)
+                  Navigator.pop(context);
+                },
+                child: const Text('저장'),
+              ),
           ],
         ),
       ),

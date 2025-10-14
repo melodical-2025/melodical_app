@@ -2,9 +2,18 @@ import 'package:flutter/material.dart';
 import '../models/musical.dart';
 import 'board_screen.dart';
 import 'post_screen.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
-class DetailScreen extends StatelessWidget {
+
+class DetailScreen extends StatefulWidget {
   const DetailScreen({Key? key}) : super(key: key);
+
+  @override
+  State<DetailScreen> createState() => _DetailScreenState();
+}
+
+class _DetailScreenState extends State<DetailScreen> {
+  bool isLiked = false;
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +128,17 @@ class DetailScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Icon(Icons.favorite, color: Colors.red),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            isLiked = !isLiked; // 상태 토글
+                          });
+                        },
+                        child: Icon(
+                          isLiked ? Icons.favorite : Icons.favorite_border,
+                          color: Colors.red,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 8),
@@ -158,7 +177,7 @@ class DetailScreen extends StatelessWidget {
                       Text('${dummyMusical.startDate} ~ ${dummyMusical.endDate}'),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
@@ -167,57 +186,124 @@ class DetailScreen extends StatelessWidget {
 
             // 예매처 바로가기
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
               child: Text(
                 '예매처 바로가기',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding: const EdgeInsets.symmetric(horizontal: 50.0),
               child: Row(
                 children: [
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      child: const Text('인터파크'),
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // 인터파크 이동 코드
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          elevation: 6, // 그림자 높이
+                          shadowColor: Colors.grey.withOpacity(0.5), // 그림자 색
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: Image.asset(
+                          'assets/nolinterpark.png',
+                          width: 120,
+                          height: 30,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 20),
                   Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      child: const Text('예스24'),
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          // 예스24 이동 코드
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          elevation: 6,
+                          shadowColor: Colors.grey.withOpacity(0.5),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          padding: EdgeInsets.zero,
+                        ),
+                        child: Image.asset(
+                          'assets/yes.png',
+                          width: 110,
+                          height: 20,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
 
+
             const SizedBox(height: 16),
             Divider(color: Colors.grey.shade400),
 
-            // 평점
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
               child: Text(
                 '평점',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: const [
-                  Icon(Icons.star, color: Colors.orange),
-                  SizedBox(width: 4),
-                  Text('4.5'),
-                  SizedBox(width: 16),
-                  Icon(Icons.star, color: Colors.orange),
-                  SizedBox(width: 4),
-                  Text('4.0'),
-                ],
-              ),
+
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        'assets/nol.png',
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      '4.3',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 70),
+                Row(
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.asset(
+                        'assets/y24.png',
+                        width: 48,
+                        height: 48,
+                        fit: BoxFit.contain,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text(
+                      '4.5',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ],
             ),
 
             const SizedBox(height: 16),
@@ -225,21 +311,34 @@ class DetailScreen extends StatelessWidget {
 
             // 평가하기
             const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
               child: Text(
                 '평가하기',
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Row(
-                children: List.generate(
-                  5,
-                      (index) => const Icon(Icons.star_border, color: Colors.orange),
+            // 별 아이콘 중앙정렬
+            Center(
+              child: RatingBar.builder(
+                initialRating: 0,
+                minRating: 0,
+                allowHalfRating: true,
+                itemCount: 5,
+                itemSize: 40, // 아이콘 크기
+                itemPadding: const EdgeInsets.symmetric(horizontal: 4),
+                unratedColor: Colors.grey.shade300,
+                itemBuilder: (_, __) => const Icon(
+                  Icons.star,
+                  color: Colors.orange,
                 ),
+                onRatingUpdate: (rating) {
+                  // rating 값 처리
+                  print('현재 선택된 평점: $rating');
+                },
               ),
             ),
+
+
 
             const SizedBox(height: 16),
             Divider(color: Colors.grey.shade400),
@@ -268,7 +367,7 @@ class DetailScreen extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blue,
+                        color: Colors.orange,
                       ),
                     ),
                   ),
@@ -290,7 +389,7 @@ class DetailScreen extends StatelessWidget {
                   },
                   child: Container(
                     width: double.infinity,
-                    margin: const EdgeInsets.only(bottom: 8),
+                    margin: const EdgeInsets.only(bottom: 0),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
                       color: Colors.white,
@@ -323,17 +422,19 @@ class DetailScreen extends StatelessWidget {
               }),
             ),
 
-            TextButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => BoardScreen()),
-                );
-              },
-              child: const Text('모두보기'),
+            Center(
+              child: TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => BoardScreen()),
+                  );
+                },
+                child: const Text('모두보기'),
+              ),
             ),
 
-            const SizedBox(height: 16),
+
             // 연관 작품 추천
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),

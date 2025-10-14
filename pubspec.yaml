@@ -33,6 +33,7 @@ dependencies:
 
   google_fonts: ^4.0.4
 
+
   http: ^0.13.5
   flutter_secure_storage: ^8.0.0
 
@@ -91,6 +92,12 @@ flutter:
     - assets/music.png
     - assets/musicicon.png
     - assets/musicalicon.png
+    - assets/interpark.png
+    - assets/yes24.png
+    - assets/nol.png
+    - assets/nolinterpark.png
+    - assets/yes.png
+    - assets/y24.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

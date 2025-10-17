@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../models/musical.dart'; // dummyMusical 사용을 위해
+import '../models/musical.dart';
 
 class PostScreen extends StatelessWidget {
-  final Map<String, String>? post; // null이면 작성 모드
+  final Map<String, String>? post;
   final bool isEditing;
-  final Musical? musical; // 작품 제목 표시용
+  final Musical? musical;
 
   const PostScreen({Key? key, this.post, this.isEditing = false, this.musical}) : super(key: key);
 
@@ -33,7 +33,6 @@ class PostScreen extends StatelessWidget {
             ),
             child: Stack(
               children: [
-                // 뒤로가기 버튼
                 Positioned(
                   left: 8,
                   bottom: 16,
@@ -44,7 +43,6 @@ class PostScreen extends StatelessWidget {
                     },
                   ),
                 ),
-                // 중앙 작품 제목
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
@@ -68,32 +66,65 @@ class PostScreen extends StatelessWidget {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Column(
+              child: isEditing
+                  ? Column(
                 children: [
                   TextField(
                     controller: titleController,
-                    decoration: const InputDecoration(labelText: '제목'),
+                    decoration: const InputDecoration(
+                      hintText: '제목을 입력해주세요.',
+                    ),
                     readOnly: !isEditing,
                   ),
                   const SizedBox(height: 16),
                   Expanded(
                     child: TextField(
                       controller: contentController,
-                      decoration: const InputDecoration(labelText: '내용'),
+                      decoration: const InputDecoration(
+                        hintText: '작품에 대해 자유롭게 얘기해보세요.',
+                        alignLabelWithHint: true,
+                      ),
                       maxLines: null,
                       expands: true,
                       readOnly: !isEditing,
                     ),
                   ),
-                  if (isEditing)
-                    ElevatedButton(
-                      onPressed: () {
-                        // 작성 후 저장 로직
-                        Navigator.pop(context);
-                      },
-                      child: const Text('저장'),
-                    ),
+                  const SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(context);
+                    },
+                    child: const Text('저장'),
+                  ),
                 ],
+              )
+                  : SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // 제목
+                    Text(
+                      post?['title'] ?? '',
+                      style: const TextStyle(
+                          fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // 작성자 • 날짜
+                    Text(
+                      '${post?['author'] ?? ''} • ${post?['date'] ?? ''}',
+                      style:
+                      TextStyle(fontSize: 12, color: Colors.grey[600]),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 본문 내용
+                    Text(
+                      post?['content'] ?? '',
+                      style: const TextStyle(fontSize: 14, height: 1.5),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -193,12 +193,12 @@ class _DetailScreenState extends State<DetailScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 50.0),
+              padding: const EdgeInsets.symmetric(horizontal: 60.0),
               child: Row(
                 children: [
                   Expanded(
                     child: SizedBox(
-                      height: 50,
+                      height: 40,
                       child: ElevatedButton(
                         onPressed: () {
                           // 인터파크 이동 코드
@@ -214,17 +214,17 @@ class _DetailScreenState extends State<DetailScreen> {
                         ),
                         child: Image.asset(
                           'assets/nolinterpark.png',
-                          width: 120,
+                          width: 100,
                           height: 30,
                           fit: BoxFit.contain,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 20),
+                  const SizedBox(width: 50),
                   Expanded(
                     child: SizedBox(
-                      height: 50,
+                      height: 40,
                       child: ElevatedButton(
                         onPressed: () {
                           // 예스24 이동 코드
@@ -241,7 +241,7 @@ class _DetailScreenState extends State<DetailScreen> {
                         child: Image.asset(
                           'assets/yes.png',
                           width: 110,
-                          height: 20,
+                          height: 18,
                           fit: BoxFit.contain,
                         ),
                       ),
@@ -253,13 +253,13 @@ class _DetailScreenState extends State<DetailScreen> {
 
 
             const SizedBox(height: 16),
-            Divider(color: Colors.grey.shade400),
 
+             //평점
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
               child: Text(
                 '평점',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
 
@@ -269,11 +269,11 @@ class _DetailScreenState extends State<DetailScreen> {
                 Row(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                       child: Image.asset(
                         'assets/nol.png',
-                        width: 48,
-                        height: 48,
+                        width: 40,
+                        height: 40,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -288,11 +288,11 @@ class _DetailScreenState extends State<DetailScreen> {
                 Row(
                   children: [
                     ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                       child: Image.asset(
                         'assets/y24.png',
-                        width: 48,
-                        height: 48,
+                        width: 40,
+                        height: 40,
                         fit: BoxFit.contain,
                       ),
                     ),
@@ -307,14 +307,13 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
 
             const SizedBox(height: 16),
-            Divider(color: Colors.grey.shade400),
 
             // 평가하기
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
               child: Text(
                 '평가하기',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
               ),
             ),
             // 별 아이콘 중앙정렬

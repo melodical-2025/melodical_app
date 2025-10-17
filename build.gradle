@@ -20,7 +20,7 @@ repositories {
 buildscript {
     repositories { google(); mavenCentral(); maven { url "https://repo1.maven.org/maven2/" } }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.1.4'
+        classpath 'com.android.tools.build:gradle:8.10.1'
         classpath 'com.google.gms:google-services:4.4.2'
     }
 }

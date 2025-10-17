@@ -29,7 +29,7 @@
     },
     {
       "name": "flutter_lints",
-      "version": "3.0.2",
+      "version": "4.0.0",
       "dependencies": [
         "lints"
       ]
@@ -38,28 +38,18 @@
       "name": "flutter_test",
       "version": "0.0.0",
       "dependencies": [
-        "async",
-        "boolean_selector",
-        "characters",
         "clock",
         "collection",
         "fake_async",
         "flutter",
-        "leak_tracker",
         "leak_tracker_flutter_testing",
-        "leak_tracker_testing",
         "matcher",
-        "material_color_utilities",
         "meta",
         "path",
-        "source_span",
         "stack_trace",
         "stream_channel",
-        "string_scanner",
-        "term_glyph",
         "test_api",
-        "vector_math",
-        "vm_service"
+        "vector_math"
       ]
     },
     {
@@ -101,7 +91,7 @@
     },
     {
       "name": "google_sign_in",
-      "version": "5.4.4",
+      "version": "6.3.0",
       "dependencies": [
         "flutter",
         "google_sign_in_android",
@@ -128,7 +118,7 @@
     },
     {
       "name": "flutter_secure_storage",
-      "version": "8.1.0",
+      "version": "9.2.4",
       "dependencies": [
         "flutter",
         "flutter_secure_storage_linux",
@@ -141,11 +131,12 @@
     },
     {
       "name": "http",
-      "version": "0.13.6",
+      "version": "1.5.0",
       "dependencies": [
         "async",
         "http_parser",
-        "meta"
+        "meta",
+        "web"
       ]
     },
     {
@@ -190,7 +181,7 @@
     },
     {
       "name": "google_fonts",
-      "version": "4.0.4",
+      "version": "6.3.2",
       "dependencies": [
         "crypto",
         "flutter",
@@ -212,25 +203,8 @@
     },
     {
       "name": "lints",
-      "version": "3.0.0",
+      "version": "4.0.0",
       "dependencies": []
-    },
-    {
-      "name": "vm_service",
-      "version": "15.0.0",
-      "dependencies": []
-    },
-    {
-      "name": "term_glyph",
-      "version": "1.2.2",
-      "dependencies": []
-    },
-    {
-      "name": "string_scanner",
-      "version": "1.4.1",
-      "dependencies": [
-        "source_span"
-      ]
     },
     {
       "name": "stream_channel",
@@ -240,45 +214,9 @@
       ]
     },
     {
-      "name": "source_span",
-      "version": "1.10.1",
-      "dependencies": [
-        "collection",
-        "path",
-        "term_glyph"
-      ]
-    },
-    {
       "name": "meta",
       "version": "1.16.0",
       "dependencies": []
-    },
-    {
-      "name": "material_color_utilities",
-      "version": "0.11.1",
-      "dependencies": [
-        "collection"
-      ]
-    },
-    {
-      "name": "leak_tracker_testing",
-      "version": "3.0.1",
-      "dependencies": [
-        "leak_tracker",
-        "matcher",
-        "meta"
-      ]
-    },
-    {
-      "name": "leak_tracker",
-      "version": "10.0.9",
-      "dependencies": [
-        "clock",
-        "collection",
-        "meta",
-        "path",
-        "vm_service"
-      ]
     },
     {
       "name": "collection",
@@ -286,29 +224,8 @@
       "dependencies": []
     },
     {
-      "name": "characters",
-      "version": "1.4.0",
-      "dependencies": []
-    },
-    {
-      "name": "boolean_selector",
-      "version": "2.1.2",
-      "dependencies": [
-        "source_span",
-        "string_scanner"
-      ]
-    },
-    {
-      "name": "async",
-      "version": "2.13.0",
-      "dependencies": [
-        "collection",
-        "meta"
-      ]
-    },
-    {
       "name": "leak_tracker_flutter_testing",
-      "version": "3.0.9",
+      "version": "3.0.10",
       "dependencies": [
         "flutter",
         "leak_tracker",
@@ -319,7 +236,7 @@
     },
     {
       "name": "vector_math",
-      "version": "2.1.4",
+      "version": "2.2.0",
       "dependencies": []
     },
     {
@@ -360,7 +277,7 @@
     },
     {
       "name": "test_api",
-      "version": "0.7.4",
+      "version": "0.7.6",
       "dependencies": [
         "async",
         "boolean_selector",
@@ -404,12 +321,7 @@
       "name": "flutter_web_plugins",
       "version": "0.0.0",
       "dependencies": [
-        "characters",
-        "collection",
-        "flutter",
-        "material_color_utilities",
-        "meta",
-        "vector_math"
+        "flutter"
       ]
     },
     {
@@ -454,12 +366,14 @@
     },
     {
       "name": "google_sign_in_web",
-      "version": "0.10.2+1",
+      "version": "0.12.4+4",
       "dependencies": [
         "flutter",
         "flutter_web_plugins",
+        "google_identity_services_web",
         "google_sign_in_platform_interface",
-        "js"
+        "http",
+        "web"
       ]
     },
     {
@@ -495,10 +409,14 @@
     },
     {
       "name": "flutter_secure_storage_windows",
-      "version": "2.1.1",
+      "version": "3.1.2",
       "dependencies": [
+        "ffi",
         "flutter",
-        "flutter_secure_storage_platform_interface"
+        "flutter_secure_storage_platform_interface",
+        "path",
+        "path_provider",
+        "win32"
       ]
     },
     {
@@ -536,6 +454,11 @@
       ]
     },
     {
+      "name": "web",
+      "version": "1.1.1",
+      "dependencies": []
+    },
+    {
       "name": "http_parser",
       "version": "4.1.2",
       "dependencies": [
@@ -546,9 +469,12 @@
       ]
     },
     {
-      "name": "web",
-      "version": "1.1.1",
-      "dependencies": []
+      "name": "async",
+      "version": "2.13.0",
+      "dependencies": [
+        "collection",
+        "meta"
+      ]
     },
     {
       "name": "logging",
@@ -660,6 +586,67 @@
       "dependencies": []
     },
     {
+      "name": "material_color_utilities",
+      "version": "0.11.1",
+      "dependencies": [
+        "collection"
+      ]
+    },
+    {
+      "name": "characters",
+      "version": "1.4.0",
+      "dependencies": []
+    },
+    {
+      "name": "leak_tracker_testing",
+      "version": "3.0.2",
+      "dependencies": [
+        "leak_tracker",
+        "matcher",
+        "meta"
+      ]
+    },
+    {
+      "name": "leak_tracker",
+      "version": "11.0.2",
+      "dependencies": [
+        "clock",
+        "collection",
+        "meta",
+        "path",
+        "vm_service"
+      ]
+    },
+    {
+      "name": "term_glyph",
+      "version": "1.2.2",
+      "dependencies": []
+    },
+    {
+      "name": "string_scanner",
+      "version": "1.4.1",
+      "dependencies": [
+        "source_span"
+      ]
+    },
+    {
+      "name": "source_span",
+      "version": "1.10.1",
+      "dependencies": [
+        "collection",
+        "path",
+        "term_glyph"
+      ]
+    },
+    {
+      "name": "boolean_selector",
+      "version": "2.1.2",
+      "dependencies": [
+        "source_span",
+        "string_scanner"
+      ]
+    },
+    {
       "name": "dio_web_adapter",
       "version": "2.1.1",
       "dependencies": [
@@ -745,11 +732,31 @@
     },
     {
       "name": "shared_preferences_android",
-      "version": "2.4.13",
+      "version": "2.4.15",
       "dependencies": [
         "flutter",
         "shared_preferences_platform_interface"
       ]
+    },
+    {
+      "name": "google_identity_services_web",
+      "version": "0.3.3+1",
+      "dependencies": [
+        "meta",
+        "web"
+      ]
+    },
+    {
+      "name": "win32",
+      "version": "5.15.0",
+      "dependencies": [
+        "ffi"
+      ]
+    },
+    {
+      "name": "ffi",
+      "version": "2.1.4",
+      "dependencies": []
     },
     {
       "name": "js",
@@ -798,7 +805,7 @@
     },
     {
       "name": "path_provider_android",
-      "version": "2.2.19",
+      "version": "2.2.20",
       "dependencies": [
         "flutter",
         "path_provider_platform_interface"
@@ -856,7 +863,7 @@
     },
     {
       "name": "url_launcher_android",
-      "version": "6.3.20",
+      "version": "6.3.24",
       "dependencies": [
         "flutter",
         "url_launcher_platform_interface"
@@ -970,6 +977,11 @@
       ]
     },
     {
+      "name": "vm_service",
+      "version": "15.0.2",
+      "dependencies": []
+    },
+    {
       "name": "pointycastle",
       "version": "3.9.1",
       "dependencies": [
@@ -995,11 +1007,6 @@
         "meta",
         "path"
       ]
-    },
-    {
-      "name": "ffi",
-      "version": "2.1.4",
-      "dependencies": []
     },
     {
       "name": "xdg_directories",

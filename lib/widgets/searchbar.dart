@@ -1,9 +1,31 @@
 import 'package:flutter/material.dart';
 
-class Searchbar extends StatelessWidget {
+class Searchbar extends StatefulWidget {
   final TextEditingController controller;
 
   const Searchbar({super.key, required this.controller});
+
+  @override
+  State<Searchbar> createState() => _SearchbarState();
+}
+
+class _SearchbarState extends State<Searchbar> {
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(() {
+      setState(() {}); // 포커스 상태 바뀌면 rebuild
+    });
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,22 +43,23 @@ class Searchbar extends StatelessWidget {
         alignment: Alignment.center,
         children: [
           TextField(
-            controller: controller,
+            controller: widget.controller,
+            focusNode: _focusNode, // <- 추가
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
               color: Colors.black.withOpacity(0.5),
               fontWeight: FontWeight.w100,
             ),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               border: InputBorder.none,
-              hintText: '뮤지컬 제목을 입력하세요',
-              hintStyle: TextStyle(
+              hintText: _focusNode.hasFocus ? '' : '뮤지컬 제목을 입력하세요', // <- 클릭하면 사라짐
+              hintStyle: const TextStyle(
                 color: Color(0xFF6F5858),
                 fontSize: 12,
                 fontWeight: FontWeight.w100,
               ),
-              contentPadding: EdgeInsets.symmetric(horizontal: 0),
+              contentPadding: const EdgeInsets.symmetric(horizontal: 0),
             ),
           ),
           const Positioned(

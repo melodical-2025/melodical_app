@@ -1,9 +1,9 @@
-// lib/screens/search_screen.dart
 import 'package:flutter/material.dart';
 import '../models/musical.dart';
 import '../services/api_service.dart';
 import '../widgets/navigationbar.dart';
 import '../widgets/searchbar.dart';
+import 'detail_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({Key? key}) : super(key: key);
@@ -58,7 +58,6 @@ class _SearchScreenState extends State<SearchScreen> {
       final list = await ApiService.fetchAllMusicals();
       setState(() {
         _allMusicals = list;
-        // 인기 작품은 처음 4개를 사용
         _popularMusicals = list.length >= 4 ? list.sublist(0, 4) : list;
       });
     } catch (e) {
@@ -113,35 +112,45 @@ class _SearchScreenState extends State<SearchScreen> {
                       : _popularMusicals[index];
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 16),
-                    child: Row(
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            m.posterUrl,
-                            width: 80,
-                            height: 120,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                Container(
-                                  width: 80,
-                                  height: 120,
-                                  color: Colors.grey.shade200,
-                                  child: const Icon(Icons.broken_image),
-                                ),
+                    child: GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                DetailScreen(),
                           ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Text(
-                            m.title,
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              m.posterUrl,
+                              width: 80,
+                              height: 120,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => Container(
+                                width: 80,
+                                height: 120,
+                                color: Colors.grey.shade200,
+                                child: const Icon(Icons.broken_image),
+                              ),
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Text(
+                              m.title,
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   );
                 },

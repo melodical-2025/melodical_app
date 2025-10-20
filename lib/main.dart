@@ -1,3 +1,4 @@
+import 'package:capstone/screens/accountmypage_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:kakao_flutter_sdk_auth/kakao_flutter_sdk_auth.dart';
 import 'package:provider/provider.dart';
@@ -43,7 +44,7 @@ class MyApp extends StatelessWidget {
           Theme.of(context).textTheme,
         ),
       ),
-      initialRoute: '/detail',
+      initialRoute: '/home',
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
@@ -53,6 +54,7 @@ class MyApp extends StatelessWidget {
         '/ratemusical': (context) => const RateScreen(),
         '/account': (context) => const AccountScreen(),
         '/accountedit': (context) => const AccounteditScreen(),
+        '/accountmypage': (context) => const AccountMyPageScreen(),
         '/musicalpick': (context) => const MusicalpickScreen(),
         '/musicpick': (context) => const MusicpickScreen(),
         '/detail': (context) => const DetailScreen(),

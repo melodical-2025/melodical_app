@@ -21,7 +21,7 @@ class BottomNavBar extends StatelessWidget {
         route = '/ratemusical';
         break;
       case 3:
-        route = '/account';
+        route = '/accountmypage';
         break;
       default:
         return;

@@ -2,6 +2,7 @@ import 'package:capstone/models/musical.dart';
 import 'package:flutter/material.dart';
 import '../models/song.dart';
 import '../widgets/navigationbar.dart';
+import '../widgets/stat_box.dart';
 import '../services/api_service.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -12,8 +13,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final int likedCount = 0;
-
   List<Musical> _ratedMusicals = [];
   bool _loadingMusicals = true;
   String? _errorMusicals;
@@ -29,21 +28,21 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadRatedMusicals();
   }
 
-  Future<void> _loadRatedMusicals() async{
+  Future<void> _loadRatedMusicals() async {
     setState(() {
       _loadingMusicals = true;
       _errorMusicals = null;
     });
-    try{
+    try {
       final list = await ApiService.fetchRatedMusicals();
       setState(() {
         _ratedMusicals = list;
       });
-    }catch (e){
+    } catch (e) {
       setState(() {
         _errorMusicals = e.toString();
       });
-    }finally{
+    } finally {
       setState(() {
         _loadingMusicals = false;
       });
@@ -76,6 +75,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final int ratedSongs = _ratedSongs.length;
     final int ratedMusicals = _ratedMusicals.length;
+    // 예시: 찜 개수는 임시로 두 리스트 합 (실제로는 찜 API/DB로 교체 권장)
     final int likedcounts = _ratedMusicals.length + _ratedSongs.length;
 
     return Scaffold(
@@ -83,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 앱 바
+          // ─ AppBar 대용 헤더 ─
           Container(
             height: 110,
             decoration: BoxDecoration(
@@ -112,7 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
-          // '나의 음악 및 뮤지컬 취향' 타이틀
+          // ─ 나의 음악 취향 ─
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: Text(
@@ -124,14 +124,12 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-
-          // 나의 음악 취향 리스트
           SizedBox(
             height: 150,
             child: _loadingSongs
                 ? const Center(child: CircularProgressIndicator())
                 : _errorSongs != null
-                ? Center(child: Text('에러: \$_errorSongs'))
+                ? Center(child: Text('에러: $_errorSongs'))
                 : ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -173,7 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 24),
 
-          // ─── '나의 뮤지컬 취향' 타이틀 ────────────────────
+          // ─ 나의 뮤지컬 취향 ─
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
             child: Text(
@@ -185,8 +183,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-
-          // ─── 나의 평가한 뮤지컬 리스트 ─────────────────
           SizedBox(
             height: 150,
             child: _loadingMusicals
@@ -240,30 +236,27 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const Spacer(),
 
-          // 통계 박스
+          // ─ 통계 허드(공용 위젯) ─
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 20),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                buildStatBoxWidget(
+                StatBox(
                   icon: Icons.favorite,
-                  assetPath: null,
                   label1: '찜한',
                   label2: '뮤지컬',
                   count: likedcounts,
                   textColor: Colors.black,
                 ),
-                buildStatBoxWidget(
-                  icon: null,
+                StatBox(
                   assetPath: 'assets/musicalicon.png',
                   label1: '평가한',
                   label2: '뮤지컬',
                   count: ratedMusicals,
                   textColor: Colors.black,
                 ),
-                buildStatBoxWidget(
-                  icon: null,
+                StatBox(
                   assetPath: 'assets/musicicon.png',
                   label1: '평가한',
                   label2: '음악',
@@ -278,53 +271,4 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
     );
   }
-
-  Widget buildStatBoxWidget({
-    IconData? icon,
-    String? assetPath,
-    required String label1,
-    required String label2,
-    required int count,
-    required Color textColor,
-  }) {
-    return Container(
-      width: 120,
-      height: 65,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF2DB),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          if (assetPath != null)
-            Image.asset(
-              assetPath,
-              width: 25,
-              height: 25,
-              fit: BoxFit.contain,
-            )
-          else if (icon != null)
-            Icon(
-              icon,
-              color: Colors.red,
-              size: 25,
-            ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              '$label1\n$label2 $count개',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-                height: 1.2,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
-

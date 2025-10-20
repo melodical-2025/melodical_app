@@ -284,7 +284,7 @@ class _DetailScreenState extends State<DetailScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(width: 70),
+                const SizedBox(width: 80),
                 Row(
                   children: [
                     ClipRRect(

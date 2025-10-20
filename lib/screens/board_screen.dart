@@ -19,7 +19,12 @@ class BoardScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.white, // 화면 배경 흰색
-      appBar: AppBar(title: const Text('작품 게시판')),
+      appBar: AppBar(
+        title: const Text('작품 게시판', style: TextStyle(color: Colors.black)),
+        backgroundColor: Colors.white, // 상단바 배경색 흰색
+        elevation: 1, // 그림자 약간만
+        iconTheme: const IconThemeData(color: Colors.black), // 뒤로가기 버튼 색
+      ),
       body: ListView.builder(
         padding: const EdgeInsets.all(12),
         itemCount: posts.length,

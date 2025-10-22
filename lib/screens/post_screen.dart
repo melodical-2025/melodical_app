@@ -381,7 +381,7 @@ class _PostScreenState extends State<PostScreen> {
                                           ElevatedButton(
                                             style: ElevatedButton.styleFrom(
                                               backgroundColor:
-                                              const Color(0xFFFFAD75),
+                                              const Color(0xFFFFD9A3),
                                               foregroundColor:
                                               const Color(0xFFE17951),
                                             ),

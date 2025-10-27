@@ -15,6 +15,10 @@ import 'screens/accountedit_screen.dart';
 import 'screens/musicpick_screen.dart';
 import 'screens/musicalpick_screen.dart';
 import 'screens/detail_screen.dart';
+import 'screens/liked_musical_list_screen.dart';
+import 'screens/rated_musical_list_screen.dart';
+import 'screens/rated_song_list_screen.dart';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,7 +48,7 @@ class MyApp extends StatelessWidget {
           Theme.of(context).textTheme,
         ),
       ),
-      initialRoute: '/detail',
+      initialRoute: '/home',
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
@@ -58,6 +62,9 @@ class MyApp extends StatelessWidget {
         '/musicalpick': (context) => const MusicalpickScreen(),
         '/musicpick': (context) => const MusicpickScreen(),
         '/detail': (context) => const DetailScreen(),
+        '/liked-musicals': (context) =>  LikedMusicalListScreen(),
+        '/rated-musicals': (context) =>  RatedMusicalListScreen(),
+        '/rated-songs': (context) =>  RatedSongListScreen(),
       },
     );
   }

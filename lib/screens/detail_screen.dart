@@ -121,7 +121,7 @@ class _DetailScreenState extends State<DetailScreen> {
                       ),
                       const SizedBox(width: 8),
                       const Text(
-                        '찜하기',
+                        '관심',
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.red,

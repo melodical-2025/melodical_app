@@ -84,7 +84,7 @@ class _MusicpickScreenState extends State<MusicpickScreen> {
                             height: 1.4
                         ),
                         children: [
-                          TextSpan(text: '좋아하는 ', style: TextStyle(color: Colors.black)),
+                          TextSpan(text: '좋아하는', style: TextStyle(color: Colors.black)),
                           TextSpan(text: '음악', style: TextStyle(color: Color(0xFFFFB224))),
                           TextSpan(text: '을\n3개 이상 선택하세요', style: TextStyle(color: Colors.black)),
                         ],

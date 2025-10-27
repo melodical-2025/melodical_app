@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-
 import '../widgets/navigationbar.dart';
 import '../widgets/stat_box.dart';
 import '../models/user_provider.dart';
 import '../services/api_service.dart';
 import '../models/musical.dart';
 import '../models/song.dart';
+
 
 class AccountMyPageScreen extends StatefulWidget {
   const AccountMyPageScreen({super.key});
@@ -206,30 +206,41 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
-        StatBox(
-          icon: Icons.favorite,
-          label1: '찜한',
-          label2: '뮤지컬',
-          count: _likedMusicals,
-          textColor: Colors.black,
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/liked-musicals'),
+          child: StatBox(
+            icon: Icons.favorite,
+            label1: '관심있는',
+            label2: '뮤지컬',
+            count: _likedMusicals,
+            textColor: Colors.black,
+          ),
         ),
-        StatBox(
-          assetPath: 'assets/musicalicon.png',
-          label1: '평가한',
-          label2: '뮤지컬',
-          count: _ratedMusicals,
-          textColor: Colors.black,
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/rated-musicals'),
+          child: StatBox(
+            assetPath: 'assets/musicalicon.png',
+            label1: '평가한',
+            label2: '뮤지컬',
+            count: _ratedMusicals,
+            textColor: Colors.black,
+          ),
         ),
-        StatBox(
-          assetPath: 'assets/musicicon.png',
-          label1: '평가한',
-          label2: '음악',
-          count: _ratedSongs,
-          textColor: Colors.black,
+        GestureDetector(
+          onTap: () => Navigator.pushNamed(context, '/rated-songs'),
+          child: StatBox(
+            assetPath: 'assets/musicicon.png',
+            label1: '평가한',
+            label2: '음악',
+            count: _ratedSongs,
+            textColor: Colors.black,
+          ),
         ),
       ],
     );
   }
+
+
 
   Widget _recentReviewCard() {
     // TODO: 백엔드 후기 API 연결 시 최신 1건 표시로 교체

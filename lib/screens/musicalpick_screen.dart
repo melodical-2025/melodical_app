@@ -95,7 +95,7 @@ class _MusicalpickScreenState extends State<MusicalpickScreen> {
                         ),
                         children: [
                           TextSpan(
-                              text: '좋아하는 ',
+                              text: '관심있는',
                               style: TextStyle(color: Colors.black)),
                           TextSpan(
                               text: '뮤지컬',

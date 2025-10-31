@@ -4,6 +4,7 @@ import '../models/song.dart';
 import '../widgets/navigationbar.dart';
 import '../services/api_service.dart';
 import '../widgets/bubblechart.dart';
+import '../widgets/custom_header.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -83,38 +84,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ─ AppBar 대용 헤더 ─
-            Container(
-              height: 110,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFFE17951),
-                    blurRadius: 4,
-                    offset: const Offset(5, 0),
-                  ),
-                ],
-              ),
-              child: const Padding(
-                padding: EdgeInsets.only(bottom: 16),
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Text(
-                    'Melodical',
-                    style: TextStyle(
-                      color: Color(0xFFE17951),
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
-            ),
+            const CustomHeader(title: 'Melodical'),
 
             // ─ 나의 음악 장르 취향 ─
             const Padding(
@@ -134,11 +109,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
             const SizedBox(height: 28),
 
-            // ─ 나의 뮤지컬 리스트 ─
+            // ─ 뮤지컬추천 ─
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
               child: Text(
-                '나의 뮤지컬 취향',
+                '당신을 위한 뮤지컬 추천',
                 style: TextStyle(
                   fontSize: 25,
                   fontWeight: FontWeight.bold,
@@ -147,17 +122,20 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             SizedBox(
-              height: 150,
-              child: _loadingMusicals
-                  ? const Center(child: CircularProgressIndicator())
-                  : _errorMusicals != null
-                  ? Center(child: Text('에러: $_errorMusicals'))
-                  : ListView.builder(
+              height: 200,
+              child: ListView.builder(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                itemCount: _ratedMusicals.length,
+                itemCount: 5, // 테스트용으로 5개만 표시
                 itemBuilder: (context, index) {
-                  final m = _ratedMusicals[index];
+                  final sampleImages = [
+                    'https://picsum.photos/200?random=1',
+                    'https://picsum.photos/200?random=2',
+                    'https://picsum.photos/200?random=3',
+                    'https://picsum.photos/200?random=4',
+                    'https://picsum.photos/200?random=5',
+                  ];
+                  final imageUrl = sampleImages[index % sampleImages.length];
                   return Padding(
                     padding: const EdgeInsets.only(right: 18.0),
                     child: Column(
@@ -166,24 +144,24 @@ class _HomeScreenState extends State<HomeScreen> {
                         ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: Image.network(
-                            m.posterUrl,
-                            width: 100,
-                            height: 100,
+                            imageUrl,
+                            width: 120,
+                            height: 160,
                             fit: BoxFit.cover,
                             errorBuilder: (_, __, ___) => Container(
-                              width: 100,
-                              height: 100,
+                              width: 120,
+                              height: 160,
                               color: Colors.grey.shade200,
                               child: const Icon(Icons.broken_image),
                             ),
                           ),
                         ),
                         const SizedBox(height: 8),
-                        SizedBox(
+                        const SizedBox(
                           width: 100,
                           child: Text(
-                            m.title,
-                            style: const TextStyle(
+                            '뮤지컬 제목',
+                            style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.bold,
                             ),
@@ -196,12 +174,77 @@ class _HomeScreenState extends State<HomeScreen> {
                 },
               ),
             ),
-            const SizedBox(height: 40), // 하단 여유
+
+            // ─ 내가 관심있는 뮤지컬 ─
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+              child: Text(
+                '내가 관심있는 뮤지컬',
+                style: TextStyle(
+                  fontSize: 25,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+            SizedBox(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                itemCount: 5, // 테스트용으로 5개만 표시
+                itemBuilder: (context, index) {
+                  final sampleImages = [
+                    'https://picsum.photos/200?random=1',
+                    'https://picsum.photos/200?random=2',
+                    'https://picsum.photos/200?random=3',
+                    'https://picsum.photos/200?random=4',
+                    'https://picsum.photos/200?random=5',
+                  ];
+                  final imageUrl = sampleImages[index % sampleImages.length];
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 18.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.network(
+                            imageUrl,
+                            width: 120,
+                            height: 160,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Container(
+                              width: 120,
+                              height: 160,
+                              color: Colors.grey.shade200,
+                              child: const Icon(Icons.broken_image),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const SizedBox(
+                          width: 100,
+                          child: Text(
+                            '뮤지컬 제목',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
           ],
         ),
       ),
+
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
     );
   }
 }
-

@@ -1,0 +1,19 @@
+spring:
+  datasource:
+    url: jdbc:mysql://melodical-db.mysql.database.azure.com:3306/melodical_prod?useSSL=true&requireSSL=true
+    driverClassName: com.mysql.cj.jdbc.Driver
+    username: melodical
+    password: Capstone2025!
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+server:
+  port: 8081
+
+jwt:
+  secret: "c3ByaW5nYm9vdC1qd3QtdHV0b3JpYWwtZXhhbXBsZS1zZWNyZXQta2V5LWZvci1hdXRoZW50aWNhdGlvbi1hbmQtYXV0aG9yaXphdGlvbg==" # Use a long, random, base64-encoded string in production
+  expiration-ms: 86400000 # 24 hours

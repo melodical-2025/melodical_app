@@ -27,23 +27,34 @@ public class AuthService {
         String encoded = passwordEncoder.encode(req.getPassword());
         User user = userRepository.save(User.builder()
                 .email(req.getEmail())
-                .password(passwordEncoder.encode(req.getPassword()))
+                .password(encoded)
+                .name(req.getNickname())  // 닉네임 설정
                 .role("ROLE_USER")
-                .provider(null)
+                .provider("local")  // 로컬 가입
                 .build()
         );
 
         String token = jwtService.generateToken(user.getEmail(), user.getId());
-        return new AuthResponse(token, user.getEmail(), user.getId());
+        return AuthResponse.builder()
+                .token(token)
+                .email(user.getEmail())
+                .userId(user.getId())
+                .nickname(user.getNickname())
+                .build();
     }
 
     public AuthResponse authenticate(LoginRequest req) {
-            authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
+        authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword()));
 
         User user = userRepository.findByEmail(req.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("사용자 없음"));
         String token = jwtService.generateToken(user.getEmail(), user.getId());
-        return new AuthResponse(token, user.getEmail(), user.getId());
+        return AuthResponse.builder()
+                .token(token)
+                .email(user.getEmail())
+                .userId(user.getId())
+                .nickname(user.getNickname())
+                .build();
     }
 }

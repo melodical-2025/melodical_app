@@ -17,6 +17,7 @@ class AccountScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: backgroundColor,
+
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(110),
         child: Container(
@@ -32,22 +33,47 @@ class AccountScreen extends StatelessWidget {
               ),
             ],
           ),
-          child: const Padding(
-            padding: EdgeInsets.only(bottom: 16),
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Text(
-                '마이페이지',
-                style: TextStyle(
-                  color: Color(0xFFE17951),
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+          child: SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 16, left: 8, right: 8),
+              child: Stack(
+                alignment: Alignment.bottomCenter,
+                children: [
+                  const Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: Text(
+                        '계정 설정',
+                        style: TextStyle(
+                          color: textColor,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: 0,
+                    bottom: 0,
+                    child: IconButton(
+                      icon: const Icon(Icons.arrow_back_ios_new, color: textColor),
+                      tooltip: '뒤로',
+                      onPressed: () {
+                        // 명시적으로 마이페이지로 이동 (스택 정리 원하면 pushReplacement 사용)
+                        Navigator.pushReplacementNamed(context, '/accountmypage');
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
+
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24.0),
         child: Column(
@@ -74,46 +100,43 @@ class AccountScreen extends StatelessWidget {
                 color: Colors.black54,
               ),
             ),
-            const SizedBox(height: 32),
-
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '계정설정',
-                style: TextStyle(
-                  color: textColor,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 24),
 
             _flatSettingItem(
               context,
-              '회원정보 수정',
-              onTap: () {
-                Navigator.pushNamed(context, '/accountedit');
+              '닉네임 변경',
+              onTap: () async {
+                final result = await Navigator.pushNamed(context, '/nickname-setting');
+                // 닉네임 변경 후 돌아오면 화면 새로고침
+                if (result == true && context.mounted) {
+                  // UserProvider 새로고침하여 닉네임 업데이트
+                  Provider.of<UserProvider>(context, listen: false).loadUserInfo();
+                }
               },
+            ),
+            _flatSettingItem(
+              context,
+              '회원정보 수정',
+              onTap: () => Navigator.pushNamed(context, '/accountedit'),
             ),
             _flatSettingItem(
               context,
               '로그아웃',
-              onTap: () {
-                Navigator.pushReplacementNamed(context, '/login');
-              },
+              onTap: () => Navigator.pushReplacementNamed(context, '/login'),
             ),
             _flatSettingItem(
               context,
               '탈퇴하기',
               onTap: () {
-                // 탈퇴 처리 예정
+                // TODO: 탈퇴 처리 연결
               },
             ),
           ],
         ),
       ),
-      bottomNavigationBar: BottomNavBar(currentIndex: 3),
+
+      // 필요 시 유지 (다른 화면과 톤 통일)
+      bottomNavigationBar: const BottomNavBar(currentIndex: 3),
     );
   }
 

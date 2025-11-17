@@ -1,8 +1,8 @@
+import 'package:capstone/screens/accountmypage_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:kakao_flutter_sdk_auth/kakao_flutter_sdk_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
-
 import 'models/user_provider.dart';
 import 'screens/splash_screen.dart';
 import 'screens/login_screen.dart';
@@ -14,6 +14,11 @@ import 'screens/account_screen.dart';
 import 'screens/accountedit_screen.dart';
 import 'screens/musicpick_screen.dart';
 import 'screens/musicalpick_screen.dart';
+import 'screens/liked_musical_list_screen.dart';
+import 'screens/rated_musical_list_screen.dart';
+import 'screens/rated_song_list_screen.dart';
+import 'screens/nickname_setting_screen.dart';  // 닉네임 설정 화면 추가
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -53,8 +58,14 @@ class MyApp extends StatelessWidget {
         '/ratemusical': (context) => const RateScreen(),
         '/account': (context) => const AccountScreen(),
         '/accountedit': (context) => const AccounteditScreen(),
+        '/accountmypage': (context) => const AccountMyPageScreen(),
         '/musicalpick': (context) => const MusicalpickScreen(),
         '/musicpick': (context) => const MusicpickScreen(),
+        '/nickname-setting': (context) => const NicknameSettingScreen(),  // 닉네임 설정 라우트 추가
+        // DetailScreen은 required 파라미터가 필요하므로 Navigator.push로만 사용
+        '/liked-musicals': (context) => const LikedMusicalListScreen(),
+        '/rated-musicals': (context) => const RatedMusicalListScreen(),
+        '/rated-songs': (context) => const RatedSongListScreen(),
       },
     );
   }

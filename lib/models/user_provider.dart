@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 
 class UserProvider extends ChangeNotifier {
   String _nickname = '';
@@ -67,5 +68,17 @@ class UserProvider extends ChangeNotifier {
   void rateMusic(String title, double rating) {
     _musicRatings[title] = rating;
     notifyListeners();
+  }
+
+  // 사용자 정보 새로고침
+  Future<void> loadUserInfo() async {
+    try {
+      final userInfo = await ApiService.getCurrentUser();
+      _nickname = userInfo['nickname'] ?? userInfo['name'] ?? '';
+      _email = userInfo['email'] ?? '';
+      notifyListeners();
+    } catch (e) {
+      print('Error loading user info: $e');
+    }
   }
 }

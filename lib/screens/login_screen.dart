@@ -42,7 +42,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final resp = await ApiService.login(email, pwd);
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        await TokenStorage().save(data['token']);
+        await TokenStorage().saveToken(data['token']);
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         _showSnack('로그인 실패 (${resp.statusCode})');
@@ -63,12 +63,10 @@ class _LoginScreenState extends State<LoginScreen> {
       final googleUser = await GoogleSignIn(scopes: ['email']).signIn();
       if (googleUser == null) throw '취소됨';
       final auth = await googleUser.authentication;
-      final resp = await ApiService.post('/auth/login/google', {
-        'token': auth.idToken,
-      });
+      final resp = await ApiService.loginWithGoogle(auth.idToken!);
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        await TokenStorage().save(data['token']);
+        await TokenStorage().saveToken(data['token']);
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         throw 'Google 로그인 실패 (${resp.statusCode})';
@@ -85,12 +83,10 @@ class _LoginScreenState extends State<LoginScreen> {
       OAuthToken token = await (await isKakaoTalkInstalled()
           ? UserApi.instance.loginWithKakaoTalk()
           : UserApi.instance.loginWithKakaoAccount());
-      final resp = await ApiService.post('/auth/login/kakao', {
-        'token': token.accessToken,
-      });
+      final resp = await ApiService.loginWithKakao(token.accessToken);
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        await TokenStorage().save(data['token']);
+        await TokenStorage().saveToken(data['token']);
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         throw '카카오 로그인 실패 (${resp.statusCode})';
@@ -108,12 +104,13 @@ class _LoginScreenState extends State<LoginScreen> {
       if (res.status != NaverLoginStatus.loggedIn) {
         throw '네이버 로그인 취소/실패';
       }
-      final resp = await ApiService.post('/auth/login/naver', {
-        'token': res.accessToken,
-      });
+      if (res.accessToken?.accessToken == null) {
+        throw '네이버 액세스 토큰을 가져올 수 없습니다';
+      }
+      final resp = await ApiService.loginWithNaver(res.accessToken!.accessToken);
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        await TokenStorage().save(data['token']);
+        await TokenStorage().saveToken(data['token']);
         Navigator.pushReplacementNamed(context, '/home');
       } else {
         throw '네이버 로그인 실패 (${resp.statusCode})';

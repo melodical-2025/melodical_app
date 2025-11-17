@@ -33,11 +33,14 @@ dependencies:
 
   google_fonts: ^4.0.4
 
+
   http: ^0.13.5
   flutter_secure_storage: ^8.0.0
 
   provider: ^6.1.1
   flutter_rating_bar: ^4.0.0
+
+  url_launcher: ^6.2.1
 
   google_sign_in: ^5.4.0
 
@@ -45,6 +48,9 @@ dependencies:
   kakao_flutter_sdk_user: ^1.9.7+3
 
   flutter_naver_login: ^2.1.0
+
+  # vector_math 패키지 버전을 고정하여 호환성 문제 해결
+  vector_math: ^2.2.0
 
 #  uni_links:
 #    git:
@@ -91,6 +97,12 @@ flutter:
     - assets/music.png
     - assets/musicicon.png
     - assets/musicalicon.png
+    - assets/interpark.png
+    - assets/yes24.png
+    - assets/nol.png
+    - assets/nolinterpark.png
+    - assets/yes.png
+    - assets/y24.png
 
 
   # An image asset can refer to one or more resolution-specific "variants", see

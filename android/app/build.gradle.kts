@@ -1,3 +1,5 @@
+import org.gradle.kotlin.dsl.coreLibraryDesugaring
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -14,6 +16,8 @@ repositories {
     maven { url = uri("https://devrepo.kakao.com/nexus/content/groups/public/") }
 }
 
+
+
 android {
     namespace = "com.example.melodical"
     compileSdk = flutter.compileSdkVersion
@@ -28,12 +32,12 @@ android {
         versionName = flutter.versionName
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
 
     buildTypes {
@@ -63,4 +67,7 @@ dependencies {
     // Kakao SDK
     implementation("com.kakao.sdk:v2-auth:2.10.0")
     implementation("com.kakao.sdk:v2-user:2.10.0")
+
+    coreLibraryDesugaring ("com.android.tools:desugar_jdk_libs:2.1.2")
+
 }

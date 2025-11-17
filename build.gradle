@@ -28,6 +28,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
+    // Redis for recommendation caching
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'io.lettuce:lettuce-core'
+
     // MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
 
@@ -50,7 +54,6 @@ dependencies {
     // macOS native DNS
     implementation "io.netty:netty-resolver-dns-native-macos:4.1.87.Final:osx-aarch_64"
     implementation "io.netty:netty-resolver-dns-native-macos:4.1.87.Final:osx-x86_64"
-
 }
 
 tasks.named('test') {

@@ -10,6 +10,7 @@ buildscript {
     }
 }
 
+
 // ✅ Firebase 및 의존성 다운로드를 위한 저장소 설정
 allprojects {
     repositories {

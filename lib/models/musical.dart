@@ -7,6 +7,11 @@ class Musical {
   final String runtime;
   final String theater;
   final String posterUrl;
+  final String? period;
+  final double? interparkRating;
+  final double? yes24Rating;
+  final String? interparkUrl;
+  final String? yes24Url;
 
   Musical({
     required this.id,
@@ -17,6 +22,11 @@ class Musical {
     required this.runtime,
     required this.theater,
     required this.posterUrl,
+    this.period,
+    this.interparkRating,
+    this.yes24Rating,
+    this.interparkUrl,
+    this.yes24Url,
   });
 
   factory Musical.fromJson(Map<String, dynamic> json) {
@@ -32,7 +42,12 @@ class Musical {
       endDate: json['endDate'] as String? ?? '',
       runtime: json['runtime'] as String? ?? '',
       theater: json['theater'] as String? ?? '',
-      posterUrl: fixedUrl,  // ← 이 부분이 바뀌었습니다
+      posterUrl: fixedUrl,
+      period: json['period'] as String?,
+      interparkRating: json['interparkRating'] != null ? (json['interparkRating'] as num).toDouble() : null,
+      yes24Rating: json['yes24Rating'] != null ? (json['yes24Rating'] as num).toDouble() : null,
+      interparkUrl: json['interparkUrl'] as String?,
+      yes24Url: json['yes24Url'] as String?,
     );
   }
 
@@ -45,5 +60,10 @@ class Musical {
     'runtime': runtime,
     'theater': theater,
     'poster_url': posterUrl,
+    'period': period,
+    'interparkRating': interparkRating,
+    'yes24Rating': yes24Rating,
+    'interparkUrl': interparkUrl,
+    'yes24Url': yes24Url,
   };
 }

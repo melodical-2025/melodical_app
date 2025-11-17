@@ -21,7 +21,7 @@ class BottomNavBar extends StatelessWidget {
         route = '/ratemusical';
         break;
       case 3:
-        route = '/account';
+        route = '/accountmypage';
         break;
       default:
         return;
@@ -72,7 +72,7 @@ class BottomNavBar extends StatelessWidget {
           GestureDetector(
             onTap: () => _onTabTapped(context, 2),
             child: Icon(
-              Icons.star,
+              Icons.star_border,
               size: 32,
               color: currentIndex == 2 ? Color(0xFFE17951) : Colors.black,
             ),

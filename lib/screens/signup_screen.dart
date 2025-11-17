@@ -66,6 +66,7 @@ class _SignupScreenState extends State<SignupScreen> {
       );
       Navigator.pushReplacementNamed(context, '/musicalpick');
     } else {
+      final decoded = jsonDecode(utf8.decode(resp.bodyBytes));
       final error = jsonDecode(resp.body)['message'] ?? '회원가입 오류';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(error)),
@@ -85,7 +86,7 @@ class _SignupScreenState extends State<SignupScreen> {
       });
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        await TokenStorage().save(data['token']);
+        await TokenStorage().saveToken(data['token']);
         Navigator.pushReplacementNamed(context, '/musicalpick');
       } else {
         throw 'Google 로그인 실패 (${resp.statusCode})';
@@ -107,7 +108,7 @@ class _SignupScreenState extends State<SignupScreen> {
       });
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        await TokenStorage().save(data['token']);
+        await TokenStorage().saveToken(data['token']);
         Navigator.pushReplacementNamed(context, '/musicalpick');
       } else {
         throw '카카오 로그인 실패 (${resp.statusCode})';
@@ -128,7 +129,7 @@ class _SignupScreenState extends State<SignupScreen> {
       });
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
-        await TokenStorage().save(data['token']);
+        await TokenStorage().saveToken(data['token']);
         Navigator.pushReplacementNamed(context, '/musicalpick');
       } else {
         throw '네이버 로그인 실패 (${resp.statusCode})';

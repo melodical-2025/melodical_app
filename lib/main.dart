@@ -14,10 +14,10 @@ import 'screens/account_screen.dart';
 import 'screens/accountedit_screen.dart';
 import 'screens/musicpick_screen.dart';
 import 'screens/musicalpick_screen.dart';
-import 'screens/detail_screen.dart';
 import 'screens/liked_musical_list_screen.dart';
 import 'screens/rated_musical_list_screen.dart';
 import 'screens/rated_song_list_screen.dart';
+import 'screens/nickname_setting_screen.dart';  // 닉네임 설정 화면 추가
 
 
 void main() async {
@@ -48,7 +48,7 @@ class MyApp extends StatelessWidget {
           Theme.of(context).textTheme,
         ),
       ),
-      initialRoute: '/home',
+      initialRoute: '/splash',
       routes: {
         '/splash': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),
@@ -61,10 +61,11 @@ class MyApp extends StatelessWidget {
         '/accountmypage': (context) => const AccountMyPageScreen(),
         '/musicalpick': (context) => const MusicalpickScreen(),
         '/musicpick': (context) => const MusicpickScreen(),
-        '/detail': (context) => const DetailScreen(),
-        '/liked-musicals': (context) =>  LikedMusicalListScreen(),
-        '/rated-musicals': (context) =>  RatedMusicalListScreen(),
-        '/rated-songs': (context) =>  RatedSongListScreen(),
+        '/nickname-setting': (context) => const NicknameSettingScreen(),  // 닉네임 설정 라우트 추가
+        // DetailScreen은 required 파라미터가 필요하므로 Navigator.push로만 사용
+        '/liked-musicals': (context) => const LikedMusicalListScreen(),
+        '/rated-musicals': (context) => const RatedMusicalListScreen(),
+        '/rated-songs': (context) => const RatedSongListScreen(),
       },
     );
   }

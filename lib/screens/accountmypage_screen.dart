@@ -6,6 +6,9 @@ import '../models/user_provider.dart';
 import '../services/api_service.dart';
 import '../models/musical.dart';
 import '../models/song.dart';
+import '../models/comment.dart';
+import '../repositories/comment_repository.dart';
+import 'detail_screen.dart';  // DetailScreen import 추가
 
 class AccountMyPageScreen extends StatefulWidget {
   const AccountMyPageScreen({super.key});
@@ -26,15 +29,13 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
   int _ratedMusicals = 0;
   int _ratedSongs = 0;
 
-  // ── 리뷰 무한스크롤 상태 ───────────────────────────────────────────────
-  final List<_ReviewItem> _reviews = [];
+  // ── 리뷰(댓글) 상태 ───────────────────────────────────────────────
+  final CommentRepository _commentRepository = CommentRepository();
+  final List<Comment> _reviews = [];
   final ScrollController _scroll = ScrollController();
 
-  // 페이지네이션 상태
-  int _page = 0;                // 0-based page index
-  final int _pageSize = 10;     // 한 번에 불러올 개수
-  bool _hasMore = true;         // 더 불러올 데이터 존재 여부
-  bool _loadingMore = false;    // 추가 로딩 중 여부
+  bool _hasMore = false;
+  bool _loadingMore = false;
   // ────────────────────────────────────────────────────────────────────
 
   @override
@@ -45,144 +46,122 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // 화면이 다시 표시될 때마다 사용자 정보 새로고침
+    _refreshUserInfo();
+  }
+
+  @override
   void dispose() {
     _scroll.removeListener(_onScroll);
     _scroll.dispose();
     super.dispose();
   }
 
-  Future<void> _bootstrap() async {
-    // 사용자 기본 정보
-    final user = Provider.of<UserProvider>(context, listen: false);
-    final nickname = (user.nickname).trim();
-    final email = (user.email).trim();
+  Future<void> _refreshUserInfo() async {
+    try {
+      final userInfo = await ApiService.getCurrentUser();
+      if (!mounted) return;
+      
+      setState(() {
+        _nickname = userInfo['nickname'] ?? userInfo['name'] ?? '(닉네임 없음)';
+        _email = userInfo['email'] ?? '';
+      });
+    } catch (e) {
+      print('⚠️ Failed to refresh user info: $e');
+    }
+  }
 
-    // 통계값 (기존 API 재사용)
+  Future<void> _bootstrap() async {
+    setState(() {
+      _loading = true;
+    });
+
+    // 통계값
     List<Musical> ratedM = [];
     List<Song> ratedS = [];
+    int likedCount = 0;
+
+    try {
+      // 최신 사용자 정보를 API에서 가져오기
+      final userInfo = await ApiService.getCurrentUser();
+      _nickname = userInfo['nickname'] ?? userInfo['name'] ?? '(닉네임 없음)';
+      _email = userInfo['email'] ?? '';
+      print('✅ Loaded user info: nickname=$_nickname, email=$_email');
+    } catch (e) {
+      print('⚠️ Failed to load user info: $e');
+      // Fallback to UserProvider
+      final user = Provider.of<UserProvider>(context, listen: false);
+      _nickname = user.nickname.trim();
+      _email = user.email.trim();
+      if (_nickname.isEmpty && _email.isNotEmpty) {
+        _nickname = _email.split('@').first;
+      }
+      if (_nickname.isEmpty) {
+        _nickname = '(닉네임 없음)';
+      }
+    }
 
     try {
       ratedM = await ApiService.fetchRatedMusicals();   // 사용자 평가 뮤지컬
-    } catch (_) {}
+    } catch (e) {
+      print('⚠️ Failed to load rated musicals: $e');
+    }
 
     try {
       ratedS = await ApiService.fetchRatedMusicByUser(); // 사용자 평가 음악
-    } catch (_) {}
+    } catch (e) {
+      print('⚠️ Failed to load rated songs: $e');
+    }
+
+    try {
+      likedCount = await ApiService.getFavoriteCount(); // 찜 개수
+    } catch (e) {
+      print('⚠️ Failed to load favorite count: $e');
+    }
 
     if (!mounted) return;
     setState(() {
-      _nickname = nickname.isEmpty && email.isNotEmpty
-          ? email.split('@').first
-          : (nickname.isEmpty ? '(닉네임 없음)' : nickname);
-      _email = email;
       _ratedMusicals = ratedM.length;
       _ratedSongs = ratedS.length;
-      _likedMusicals = 0; // TODO(backend): 찜 개수 API로 교체
+      _likedMusicals = likedCount;
       _loading = false;
     });
 
-    // ✅ 첫 페이지 로드
-    await _reloadReviews();
+    // ✅ 댓글 로드
+    await _loadReviews();
   }
 
-  // ── 스크롤 끝 근처 감지 → 다음 페이지 로드 ─────────────────────────────
+  // ── 스크롤 끝 근처 감지 (향후 페이지네이션 시 사용 가능) ─────────────────
   void _onScroll() {
-    if (_loadingMore || !_hasMore) return;
-    if (!_scroll.hasClients) return;
-
-    final max = _scroll.position.maxScrollExtent;
-    final offset = _scroll.position.pixels;
-
-    // 끝에서 200px 남으면 다음 페이지 로드
-    if (max - offset < 200) {
-      _loadMoreReviews();
-    }
+    // 현재는 모든 댓글을 한 번에 로드하므로 무한스크롤 불필요
   }
 
-  // ── 새로고침(맨 처음 페이지부터 다시) ────────────────────────────────
+  // ── 새로고침 ────────────────────────────────────────────────────────
   Future<void> _refresh() async {
-    await _reloadReviews();
+    await _loadReviews();
   }
 
-  Future<void> _reloadReviews() async {
-    setState(() {
-      _page = 0;
-      _hasMore = true;
-      _reviews.clear();
-    });
-    await _loadMoreReviews();
-  }
-
-  // ── 다음 페이지 로드 (무한스크롤 핵심) ────────────────────────────────
-  Future<void> _loadMoreReviews() async {
-    if (!_hasMore || _loadingMore) return;
-
-    setState(() => _loadingMore = true);
-
+  Future<void> _loadReviews() async {
     try {
-      // TODO(backend): 여기를 실제 API 호출로 교체
-      // 예) final pageDto = await ApiService.fetchUserReviews(page: _page, size: _pageSize);
-      //     final items = pageDto.items.map((e) => _ReviewItem.fromDto(e)).toList();
-      //     final got = items.length;
-      //     final more = pageDto.hasNext;  // 또는 got == _pageSize 로 판단
-      final fetched = await _fakeFetchReviews(page: _page, size: _pageSize);
-
+      final comments = await _commentRepository.getMyComments();
       if (!mounted) return;
       setState(() {
-        _reviews.addAll(fetched.items);
-        _hasMore = fetched.hasNext;
-        _page += 1;
+        _reviews.clear();
+        _reviews.addAll(comments);
+        _hasMore = false;
       });
     } catch (e) {
-      // 필요한 경우 에러 토스트/스낵바
-      // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('후기 불러오기 실패: $e')));
+      print('❌ Error loading my comments: $e');
+      if (!mounted) return;
       setState(() {
-        _hasMore = false; // 더 이상 시도 안 함(임시)
+        _reviews.clear();
+        _hasMore = false;
       });
-    } finally {
-      if (mounted) {
-        setState(() => _loadingMore = false);
-      }
     }
   }
 
-  // ── 가짜 데이터 소스(데모). 나중에 API로 교체 ─────────────────────────
-  Future<_Paged<_ReviewItem>> _fakeFetchReviews({
-    required int page,
-    required int size,
-  }) async {
-    await Future.delayed(const Duration(milliseconds: 450)); // 로딩감 주기
-
-    // 데모 전체 데이터 풀(50개 생성)
-    final total = 50;
-    final now = DateTime.now();
-
-    List<_ReviewItem> all = List.generate(total, (i) {
-      final day = ((i % 27) + 1);
-      return _ReviewItem(
-        title: i % 3 == 0 ? '뮤지컬 <햄릿>' : (i % 3 == 1 ? '뮤지컬 <레미제라블>' : '뮤지컬 <비틀쥬스>'),
-        rating: 3.5 + (i % 4) * 0.5, // 3.5~5.0
-        content: [
-          '정말 재미있었어요! 음악이 너무 좋았어요.',
-          '배우들 연기가 너무 인상 깊었습니다.',
-          '조명과 무대가 멋졌어요. 다시 보고 싶어요!',
-          '몰입감이 뛰어나고 스토리가 탄탄했어요.'
-        ][i % 4],
-        date: DateTime(now.year, now.month, (now.day - day).clamp(1, 28)),
-      );
-    });
-
-    // 최신순(날짜 내림차순)
-    all.sort((a, b) => b.date.compareTo(a.date));
-
-    // 페이지 슬라이스
-    final start = page * size;
-    final end = (start + size).clamp(0, all.length);
-    final slice = start >= all.length ? <_ReviewItem>[] : all.sublist(start, end);
-
-    final hasNext = end < all.length;
-    return _Paged(items: slice, hasNext: hasNext);
-  }
   // ────────────────────────────────────────────────────────────────────
 
   @override
@@ -415,11 +394,38 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
               separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final r = _reviews[index];
-                return _reviewItemCard(
-                  title: r.title,
-                  rating: r.rating,
-                  content: r.content,
-                  date: r.date,
+                return GestureDetector(
+                  onTap: () async {
+                    // 뮤지컬 상세페이지로 이동
+                    if (r.musicalId != null) {
+                      try {
+                        // musicalId로 뮤지컬 데이터 가져오기
+                        final musicalData = await ApiService.fetchMonthlyMusicals();
+                        final musical = musicalData.firstWhere(
+                          (m) => m['id'] == r.musicalId,
+                          orElse: () => {},
+                        );
+                        
+                        if (musical.isNotEmpty && mounted) {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DetailScreen(musicalData: musical),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        print('Error navigating to musical: $e');
+                      }
+                    }
+                  },
+                  child: _reviewItemCard(
+                    musicalTitle: r.musicalTitle,  // 뮤지컬 제목 추가
+                    title: null,  // 댓글에는 제목이 없음
+                    rating: null,  // 댓글에는 평점이 없음
+                    content: r.content,
+                    date: r.createdAt,
+                  ),
                 );
               },
             ),
@@ -429,6 +435,7 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
   }
 
   Widget _reviewItemCard({
+    String? musicalTitle,  // 뮤지컬 제목 추가
     String? title,
     double? rating,
     required String content,
@@ -444,6 +451,28 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (musicalTitle != null && musicalTitle.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  const Icon(Icons.theater_comedy, size: 14, color: primary),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      musicalTitle,
+                      style: const TextStyle(
+                        color: primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 13,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           if (title != null && title.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
@@ -508,35 +537,4 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
 
   String _yyyymmdd(DateTime d) =>
       '${d.year}.${d.month.toString().padLeft(2, '0')}.${d.day.toString().padLeft(2, '0')}';
-}
-
-// ───── 데이터 모델(간단) ────────────────────────────────────────────────
-// TODO(backend): 서버 DTO와 키를 맞춰서 fromJson 생성자로 교체하세요.
-class _ReviewItem {
-  final String? title;
-  final double? rating;
-  final String content;
-  final DateTime date;
-
-  _ReviewItem({
-    this.title,
-    this.rating,
-    required this.content,
-    required this.date,
-  });
-
-// 예: 서버 응답으로 바꿀 때
-// factory _ReviewItem.fromJson(Map<String, dynamic> j) => _ReviewItem(
-//   title: j['musicalTitle'] as String?,
-//   rating: j['rating'] == null ? null : double.tryParse(j['rating'].toString()),
-//   content: (j['content'] ?? '').toString(),
-//   date: DateTime.parse(j['createdAt'].toString()),
-// );
-}
-
-// 페이징 래퍼
-class _Paged<T> {
-  final List<T> items;
-  final bool hasNext;
-  _Paged({required this.items, required this.hasNext});
 }

@@ -40,12 +40,17 @@ dependencies:
   provider: ^6.1.1
   flutter_rating_bar: ^4.0.0
 
+  url_launcher: ^6.2.1
+
   google_sign_in: ^5.4.0
 
   kakao_flutter_sdk_auth: ^1.9.7+3
   kakao_flutter_sdk_user: ^1.9.7+3
 
   flutter_naver_login: ^2.1.0
+
+  # vector_math 패키지 버전을 고정하여 호환성 문제 해결
+  vector_math: ^2.2.0
 
 #  uni_links:
 #    git:

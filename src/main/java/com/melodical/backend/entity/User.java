@@ -23,13 +23,30 @@ public class User {
 
     private String name;
 
+    @Column(name = "nickname")
+    private String nickname; // 사용자 정의 닉네임
+
     private String role; // ex) "USER", "ADMIN"
 
     private String provider;
+    
+    private String providerId; // 소셜 로그인 제공자의 사용자 ID
 
     // 소셜 로그인 사용자 정보 갱신 시 사용
     public User update(String name) {
         this.name = name;
         return this;
+    }
+
+    public String getNickname() {
+        // nickname이 설정되어 있으면 nickname 반환, 없으면 name 반환
+        if (this.nickname != null && !this.nickname.isEmpty()) {
+            return this.nickname;
+        }
+        return this.name != null && !this.name.isEmpty() ? this.name : "Unknown";
+    }
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
     }
 }

@@ -104,6 +104,18 @@ class AccountScreen extends StatelessWidget {
 
             _flatSettingItem(
               context,
+              '닉네임 변경',
+              onTap: () async {
+                final result = await Navigator.pushNamed(context, '/nickname-setting');
+                // 닉네임 변경 후 돌아오면 화면 새로고침
+                if (result == true && context.mounted) {
+                  // UserProvider 새로고침하여 닉네임 업데이트
+                  Provider.of<UserProvider>(context, listen: false).loadUserInfo();
+                }
+              },
+            ),
+            _flatSettingItem(
+              context,
               '회원정보 수정',
               onTap: () => Navigator.pushNamed(context, '/accountedit'),
             ),

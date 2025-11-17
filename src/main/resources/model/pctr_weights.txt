@@ -1,0 +1,63 @@
+# pCTR Logistic Regression Model Weights
+# Format: feature_name=weight_value
+# Lines starting with # are comments
+
+# Bias term
+bias=-1.5
+
+# User Features - Genre Preferences
+user_genre_rock=0.30
+user_genre_pop=0.25
+user_genre_classical=0.20
+user_genre_jazz=0.22
+user_genre_electronic=0.18
+user_genre_hip-hop=0.15
+user_genre_r&b=0.17
+
+# User Features - Activity
+user_recent_clicks=0.40
+user_profile_strength=0.30
+user_region_seoul=0.10
+
+# Item Features - Status
+item_is_on_sale=0.50
+item_is_new=0.30
+item_popularity=0.40
+
+# Item Features - Location
+item_region_seoul=0.15
+item_region_busan=0.12
+item_price_range=0.05
+
+# Item Features - Genre
+item_genre_로맨스=0.25
+item_genre_코미디=0.22
+item_genre_드라마=0.28
+item_genre_액션=0.18
+item_genre_판타지=0.20
+item_genre_호러=0.10
+item_genre_스릴러=0.15
+
+# Cross Features - Stage 1 Scores
+cross_content_score=1.20
+cross_cf_score=1.00
+cross_stage1_score=0.80
+cross_content_cf_interaction=0.60
+cross_past_exposure=-0.30
+cross_region_match=0.25
+
+# Context Features - Time
+context_hour_morning=0.05
+context_hour_afternoon=0.08
+context_hour_evening=0.20
+context_hour_night=-0.10
+context_is_weekend=0.15
+
+# Context Features - Surface
+context_surface_home=0.10
+context_surface_search=0.08
+context_surface_detail=0.12
+
+# Context Features - Device
+context_device_mobile=0.05
+

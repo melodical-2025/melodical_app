@@ -1,0 +1,57 @@
+# 로그 파일
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data files - 오래된 데이터 파일들은 버전 관리에서 제외
+data/*_201*.csv
+data/*_202[0-4]*.csv
+data/*_201*.json
+data/*_202[0-4]*.json
+
+# 최신 데이터는 포함 (현재 날짜 기준)
+!data/*_20251104_163553.*
+
+# Selenium WebDriver
+geckodriver.log
+chromedriver.log
+
+# Backup files
+*.backup
+*_old.*
+*_v[0-9].*

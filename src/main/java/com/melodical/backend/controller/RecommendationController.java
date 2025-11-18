@@ -98,7 +98,8 @@ public class RecommendationController {
             List<Map<String, Object>> result = recommendations.stream()
                     .map(rec -> {
                         Map<String, Object> map = new HashMap<>();
-                        map.put("id", rec.getMusicalId());
+                        map.put("musicalId", rec.getMusicalId());  // musicalId로 통일
+                        map.put("id", rec.getMusicalId());  // 하위 호환성
                         map.put("title", rec.getTitle());
                         map.put("posterUrl", rec.getPosterUrl());
                         map.put("theater", rec.getTheater());
@@ -113,6 +114,14 @@ public class RecommendationController {
                         map.put("isNew", rec.getIsNew());
                         map.put("reasons", rec.getReasons());
                         map.put("tags", rec.getTags());
+                        // 추천 이유 필드 추가
+                        map.put("recommendationReason", rec.getRecommendationReason());
+                        map.put("similarityPercentage", rec.getSimilarityPercentage());
+                        map.put("chartRanking", rec.getChartRanking());
+                        // 평점 및 URL 추가
+                        map.put("averageRating", rec.getAverageRating());
+                        map.put("interparkUrl", rec.getInterparkUrl());
+                        map.put("yes24Url", rec.getYes24Url());
                         return map;
                     })
                     .collect(Collectors.toList());

@@ -37,23 +37,34 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadRecommendations() async {
+    print('🎯 Starting to load recommendations...');
     setState(() {
       _loadingRecommendations = true;
       _errorRecommendations = null;
     });
     try {
       final userId = await TokenStorage().getUserId();
+      print('🎯 User ID: $userId');
       if (userId != null) {
+        print('🎯 Calling API to get recommendations...');
         final recs = await ApiService.getRecommendations(
           userId,
           surface: 'home',
           count: 10,
         );
+        print('🎯 Received ${recs.length} recommendations');
+        if (recs.isNotEmpty) {
+          print('🎯 First recommendation: ${recs[0]}');
+        }
         setState(() {
           _recommendations = recs;
         });
+        print('✅ Recommendations loaded successfully: ${_recommendations.length} items');
+      } else {
+        print('⚠️ User ID is null, cannot load recommendations');
       }
     } catch (e) {
+      print('❌ Error loading recommendations: $e');
       setState(() {
         _errorRecommendations = e.toString();
       });
@@ -370,7 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           // ─── 추천 뮤지컬 리스트 ─────────────────
           SizedBox(
-            height: 150,
+            height: 180,  // 높이를 130(포스터) + 8(간격) + 30(제목 2줄) + 여유로 증가
             child: _loadingRecommendations
                 ? const Center(child: CircularProgressIndicator())
                 : _errorRecommendations != null
@@ -383,6 +394,7 @@ class _HomeScreenState extends State<HomeScreen> {
               itemCount: _recommendations.length,
               itemBuilder: (context, index) {
                 final rec = _recommendations[index];
+                
                 return Padding(
                   padding: const EdgeInsets.only(right: 18.0),
                   child: GestureDetector(
@@ -394,65 +406,92 @@ class _HomeScreenState extends State<HomeScreen> {
                         return;
                       }
                       
-                      // API를 통해 최신 데이터 가져오기 (URL 포함)
-                      try {
-                        final detailData = await ApiService.getMusicalDetail(musicalId);
-                        if (!context.mounted) return;
-                        
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DetailScreen(
-                              musicalData: detailData,
-                            ),
+                      print('🎯 Recommendation clicked:');
+                      print('  - musicalId: $musicalId');
+                      print('  - title: ${rec['title']}');
+                      print('  - posterUrl: ${rec['posterUrl']}');
+                      print('  - recommendationReason: ${rec['recommendationReason']}');
+                      print('  - similarityPercentage: ${rec['similarityPercentage']}');
+                      print('  - chartRanking: ${rec['chartRanking']}');
+                      print('  - averageRating: ${rec['averageRating']}');
+                      print('  - interparkUrl: ${rec['interparkUrl']}');
+                      print('  - yes24Url: ${rec['yes24Url']}');
+                      
+                      // 추천 데이터를 직접 사용 (integrated 데이터 포함)
+                      final musicalDataWithReason = {
+                        'id': musicalId,
+                        'title': rec['title'] ?? '',
+                        'posterUrl': rec['posterUrl'] ?? '',
+                        'theater': rec['theater'] ?? '',
+                        'startDate': rec['startDate'],
+                        'endDate': rec['endDate'],
+                        'period': '${rec['startDate'] ?? ''} ~ ${rec['endDate'] ?? ''}',
+                        'genre': rec['genre'] ?? '',
+                        'rating': rec['score'],
+                        // 추천 이유 정보
+                        'recommendationReason': rec['recommendationReason'],
+                        'similarityPercentage': rec['similarityPercentage'],
+                        'chartRanking': rec['chartRanking'],
+                        // 평점 및 URL 정보 (integrated 데이터)
+                        'averageRating': rec['averageRating'],
+                        'interparkUrl': rec['interparkUrl'],
+                        'yes24Url': rec['yes24Url'],
+                      };
+                      
+                      print('📦 Passing to DetailScreen: ${musicalDataWithReason.keys.toList()}');
+                      
+                      if (!context.mounted) return;
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DetailScreen(
+                            musicalData: musicalDataWithReason,
                           ),
-                        );
-                      } catch (e) {
-                        print('❌ Failed to fetch musical detail: $e');
-                        if (!context.mounted) return;
-                        
-                        // 에러 시에도 기존 데이터로 이동 (URL 없이)
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => DetailScreen(
-                              musicalData: {
-                                'id': musicalId,
-                                'title': rec['title'] ?? '',
-                                'posterUrl': rec['posterUrl'] ?? '',
-                                'theater': rec['theater'] ?? '',
-                                'period': '${rec['startDate'] ?? ''} ~ ${rec['endDate'] ?? ''}',
-                                'genre': rec['genre'] ?? '',
-                                'rating': rec['score'],
-                              },
-                            ),
-                          ),
-                        );
-                      }
+                        ),
+                      );
                     },
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          child: rec['posterUrl'] != null
+                          child: rec['posterUrl'] != null && rec['posterUrl'].toString().isNotEmpty
                               ? Image.network(
                             rec['posterUrl'],
                             width: 100,
-                            height: 100,
+                            height: 130,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 100,
-                              height: 100,
-                              color: Colors.grey.shade200,
-                              child: const Icon(Icons.theaters),
-                            ),
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                width: 100,
+                                height: 130,
+                                color: Colors.grey.shade200,
+                                child: Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes != null
+                                        ? loadingProgress.cumulativeBytesLoaded /
+                                        loadingProgress.expectedTotalBytes!
+                                        : null,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (_, __, ___) {
+                              print('❌ Failed to load poster: ${rec['posterUrl']}');
+                              return Container(
+                                width: 100,
+                                height: 130,
+                                color: Colors.grey.shade200,
+                                child: const Icon(Icons.theaters, size: 40),
+                              );
+                            },
                           )
                               : Container(
                             width: 100,
-                            height: 100,
+                            height: 130,
                             color: Colors.grey.shade200,
-                            child: const Icon(Icons.theaters),
+                            child: const Icon(Icons.theaters, size: 40),
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -465,6 +504,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               fontWeight: FontWeight.bold,
                             ),
                             overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
                           ),
                         ),
                       ],

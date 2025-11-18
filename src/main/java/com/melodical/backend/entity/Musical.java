@@ -15,6 +15,12 @@ public class Musical {
     @Column(name = "interpark_id", unique = true)
     private String interparkId; // Interpark URL의 마지막 8자리 숫자
 
+    @Column(name = "interpark_url")
+    private String interparkUrl; // Interpark 티켓 페이지 URL
+
+    @Column(name = "yes24_url")
+    private String yes24Url; // Yes24 티켓 페이지 URL
+
     private String cast;
     private String endDate;
     private String posterUrl;

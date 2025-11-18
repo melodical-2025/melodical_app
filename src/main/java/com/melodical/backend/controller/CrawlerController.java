@@ -3,6 +3,7 @@ package com.melodical.backend.controller;
 import com.melodical.backend.entity.CrawledMusicalRanking;
 import com.melodical.backend.service.crawler.CrawledDataService;
 import com.melodical.backend.service.crawler.MusicalCrawlerService;
+import com.melodical.backend.service.crawler.MusicalSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ public class CrawlerController {
 
     private final MusicalCrawlerService crawlerService;
     private final CrawledDataService crawledDataService;
+    private final MusicalSyncService musicalSyncService;
 
     /**
      * 수동 크롤링 실행
@@ -137,6 +139,34 @@ public class CrawlerController {
             Map<String, String> response = new HashMap<>();
             response.put("status", "error");
             response.put("message", e.getMessage());
+
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
+
+    /**
+     * posterUrl이 없는 뮤지컬 복구
+     */
+    @PostMapping("/fix-poster-urls")
+    public ResponseEntity<Map<String, Object>> fixMissingPosterUrls() {
+        log.info("🔧 Fix missing posterUrls requested");
+
+        try {
+            int fixedCount = musicalSyncService.fixMissingPosterUrls();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Fixed missing posterUrls");
+            response.put("fixedCount", fixedCount);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("❌ Failed to fix posterUrls", e);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            response.put("fixedCount", 0);
 
             return ResponseEntity.internalServerError().body(response);
         }

@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/crawler/**").permitAll()
                         .requestMatchers("/api/test/**").permitAll()
                         .requestMatchers("/api/comments/musical/**").permitAll()
-                        .requestMatchers(HttpMethod.POST,"/api/musicals/rate").authenticated()
+                        .requestMatchers(HttpMethod.POST,"/api/musicals/rate", "/api/musicals/rate/batch").authenticated()
                         .requestMatchers("/api/comments/**").authenticated()
                         .anyRequest().authenticated()
                 )

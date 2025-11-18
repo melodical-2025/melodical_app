@@ -3,6 +3,7 @@ package com.melodical.backend.service;
 import com.melodical.backend.dto.*;
 import com.melodical.backend.entity.Rated;
 import com.melodical.backend.repository.RatedRepository;
+import com.melodical.backend.service.recommendation.ProactiveRecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -14,18 +15,21 @@ import java.util.*;
 public class MusicRatingService {
 
     private final RatedRepository ratedRepo;
+    private final ProactiveRecommendationService proactiveRecommendationService;
 
     /** 사용자 + 곡별 평점을 저장(또는 업데이트) */
     public void saveRatings(MusicRatingRequest req) {
         String contentType = req.getType();  // "music" 등
+        Long userId = req.getUserId();
+        
         for (RatingDto r : req.getMusicRatings()) {
             String contentId = r.getContentId();
             double rating = r.getRating();
 
             Rated record = ratedRepo
-                    .findByUserIdAndContentTypeAndContentId(req.getUserId(), contentType, contentId)
+                    .findByUserIdAndContentTypeAndContentId(userId, contentType, contentId)
                     .orElseGet(() -> Rated.builder()
-                            .userId(req.getUserId())
+                            .userId(userId)
                             .contentType(contentType)
                             .contentId(contentId)
                             .build()
@@ -39,6 +43,16 @@ public class MusicRatingService {
             record.setRatedAt(LocalDateTime.now());
 
             ratedRepo.save(record);
+            
+            // Note: 사용자 음악 프로필은 배치 작업으로 업데이트됨
+            // UserProfileService의 scheduled 작업 참조
+        }
+        
+        // 사용자의 추천 목록 재생성 (비동기)
+        try {
+            proactiveRecommendationService.refreshRecommendations(userId);
+        } catch (Exception e) {
+            // 추천 재생성 실패는 로그만 남기고 무시
         }
     }
 

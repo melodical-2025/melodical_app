@@ -68,12 +68,8 @@ public class AppRecommendationController {
         if (posterUrl != null && posterUrl.startsWith("//")) {
             posterUrl = "https:" + posterUrl;
         } else if (posterUrl == null || posterUrl.trim().isEmpty()) {
-            try {
-                posterUrl = "https://via.placeholder.com/300x400?text=" +
-                        java.net.URLEncoder.encode(rec.getTitle(), "UTF-8");
-            } catch (java.io.UnsupportedEncodingException e) {
-                posterUrl = "https://via.placeholder.com/300x400?text=NoImage";
-            }
+            // posterUrl이 없으면 null로 유지 (Flutter에서 기본 이미지 표시)
+            posterUrl = null;
         }
         map.put("posterUrl", posterUrl);
 
@@ -90,6 +86,21 @@ public class AppRecommendationController {
         map.put("popularityScore", rec.getPopularityScore());
         map.put("reasons", rec.getReasons());
         map.put("position", rec.getPosition());
+        
+        // 추천 이유 필드 추가 (null이면 기본값 설정)
+        String reason = rec.getRecommendationReason();
+        if (reason == null || reason.trim().isEmpty()) {
+            reason = "추천 작품입니다";
+        }
+        map.put("recommendationReason", reason);
+        map.put("similarityPercentage", rec.getSimilarityPercentage());
+        map.put("chartRanking", rec.getChartRanking());
+        
+        // 평점 및 URL 추가
+        map.put("averageRating", rec.getAverageRating());
+        map.put("interparkUrl", rec.getInterparkUrl());
+        map.put("yes24Url", rec.getYes24Url());
+        
         return map;
     }
 }

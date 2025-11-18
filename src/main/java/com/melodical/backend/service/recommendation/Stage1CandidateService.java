@@ -1,10 +1,8 @@
 package com.melodical.backend.service.recommendation;
 
 import com.melodical.backend.dto.CandidateItem;
-import com.melodical.backend.dto.UserMusicProfileDto;
 import com.melodical.backend.entity.*;
 import com.melodical.backend.repository.*;
-import com.melodical.backend.service.crawler.CrawledDataService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -14,361 +12,268 @@ import java.util.stream.Collectors;
 
 /**
  * Stage-1: 후보 생성 서비스 (Recall 최적화)
- * 콘텐츠 기반 + 협업 필터링 + 크롤링 데이터로 Top-M 후보를 빠르게 수집
+ * 평점 기반 협업 필터링으로 Top-M 후보를 수집
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class Stage1CandidateService {
 
-    private final UserMusicProfileRepository userMusicProfileRepository;
-    private final MusicalFanProfileRepository musicalFanProfileRepository;
     private final MusicalRepository musicalRepository;
-    private final InteractionLogRepository interactionLogRepository;
     private final UserRepository userRepository;
-    private final CrawledDataService crawledDataService;
+    private final RatingBasedSimilarityService ratingBasedSimilarityService;
 
-    // 가중치 설정
-    private static final double CONTENT_WEIGHT = 0.50;
-    private static final double CF_WEIGHT = 0.35;
-    private static final double CRAWLED_WEIGHT = 0.10;
-    private static final double SIDE_WEIGHT = 0.05;
+    // ✨ 새로운 가중치 설정 (음악 CF 30% + 뮤지컬 CF 50% + 인기차트 20%)
+    private static final double MUSIC_CF_WEIGHT = 0.30;     // 음악 취향 기반 협업 필터링
+    private static final double MUSICAL_CF_WEIGHT = 0.50;   // 뮤지컬 취향 기반 협업 필터링
+    private static final double POPULARITY_WEIGHT = 0.20;   // 인기차트 기반
 
     /**
-     * 사용자에 대한 후보 아이템들을 생성
+     * ✨ 새로운 추천 알고리즘: 평점 기반 협업 필터링
+     * - 음악 취향 유사 사용자의 뮤지컬 추천 (30%)
+     * - 뮤지컬 취향 유사 사용자의 뮤지컬 추천 (50%)
+     * - 인기 차트 (20%)
      */
     public List<CandidateItem> generateCandidates(User user, String region, int topM) {
-        log.info("Generating candidates for user: {}, topM: {}", user.getId(), topM);
+        log.info("🎯 Generating candidates for user: {} using rating-based CF", user.getId());
 
-        // 사용자 음악 프로필 로드
-        UserMusicProfileDto userProfile = loadUserMusicProfile(user);
-        if (userProfile.getGenrePreferences().isEmpty()) {
+        // 사용자가 이미 평가한 뮤지컬 제외
+        Set<String> userRatedMusicals = ratingBasedSimilarityService.getUserRatedMusicalIds(user.getId());
+        log.info("  User has rated {} musicals", userRatedMusicals.size());
+
+        // 모든 활성 사용자 목록 조회 (평점을 남긴 사용자)
+        List<Long> candidateUserIds = userRepository.findAll().stream()
+                .map(User::getId)
+                .collect(Collectors.toList());
+
+        // 1) 음악 취향 기반 유사 사용자 찾기 (30%)
+        Map<Long, Double> musicSimilarUsers = ratingBasedSimilarityService
+                .findSimilarUsersByMusicTaste(user.getId(), candidateUserIds, 20);
+        log.info("  Found {} similar users by music taste", musicSimilarUsers.size());
+
+        // 2) 뮤지컬 취향 기반 유사 사용자 찾기 (50%)
+        Map<Long, Double> musicalSimilarUsers = ratingBasedSimilarityService
+                .findSimilarUsersByMusicalTaste(user.getId(), candidateUserIds, 20);
+        log.info("  Found {} similar users by musical taste", musicalSimilarUsers.size());
+
+        // Cold start 처리
+        if (musicSimilarUsers.isEmpty() && musicalSimilarUsers.isEmpty()) {
+            log.info("  ⚠️ Cold start user - using popularity-based recommendations");
             return handleColdStartUser(user, region, topM);
         }
 
-        // 1) 콘텐츠 기반 후보 생성
-        List<CandidateItem> contentCandidates = generateContentBasedCandidates(userProfile, topM / 2);
+        // 3) 음악 취향 기반 뮤지컬 점수 계산
+        Map<String, Double> musicBasedScores = ratingBasedSimilarityService
+                .getWeightedMusicalScores(musicSimilarUsers, userRatedMusicals);
+        log.info("  Music-based CF found {} musicals", musicBasedScores.size());
 
-        // 2) 협업 필터링 후보 생성
-        List<CandidateItem> cfCandidates = generateCollaborativeFilteringCandidates(user, topM / 2);
+        // 4) 뮤지컬 취향 기반 뮤지컬 점수 계산
+        Map<String, Double> musicalBasedScores = ratingBasedSimilarityService
+                .getWeightedMusicalScores(musicalSimilarUsers, userRatedMusicals);
+        log.info("  Musical-based CF found {} musicals", musicalBasedScores.size());
 
-        // 3) 크롤링 데이터 기반 인기 후보 추가
-        List<CandidateItem> crawledCandidates = generateCrawledDataCandidates(topM / 4);
+        // 5) 인기 차트 점수
+        Map<Long, Double> popularityScores = getPopularityScores();
 
-        // 4) 후보들을 통합하고 중복 제거
-        Map<Long, CandidateItem> candidateMap = new HashMap<>();
+        // 6) 점수 통합 (30% + 50% + 20%)
+        Map<String, CandidateItem> candidateMap = new HashMap<>();
 
-        // 콘텐츠 기반 후보 추가
-        for (CandidateItem item : contentCandidates) {
-            candidateMap.put(item.getMusicalId(), item);
+        // 음악 기반 점수 추가 (30%)
+        for (Map.Entry<String, Double> entry : musicBasedScores.entrySet()) {
+            String musicalId = entry.getKey();
+            double score = entry.getValue() * MUSIC_CF_WEIGHT;
+            
+            Optional<Musical> musicalOpt = findMusicalByInterparkId(musicalId);
+            if (musicalOpt.isEmpty()) continue;
+            
+            Musical musical = musicalOpt.get();
+            CandidateItem candidate = CandidateItem.builder()
+                    .musicalId(musical.getId())
+                    .title(musical.getTitle())
+                    .contentCrossScore(0.0)
+                    .cfCrossScore(score)
+                    .sideScore(0.0)
+                    .genre(musical.getGenre())
+                    .region(musical.getRegion())
+                    .isOnSale(musical.getIsOnSale())
+                    .isNew(musical.getIsNew())
+                    .popularityScore(musical.getPopularityScore())
+                    .source("music_cf")
+                    .musicCfScore(score)  // 음악 CF 점수
+                    .musicalCfScore(0.0)  // 뮤지컬 CF 점수
+                    .build();
+            candidateMap.put(musicalId, candidate);
         }
 
-        // 협업 필터링 후보 추가 (기존 아이템이 있으면 점수 통합)
-        for (CandidateItem item : cfCandidates) {
-            Long musicalId = item.getMusicalId();
+        // 뮤지컬 기반 점수 추가 (50%)
+        for (Map.Entry<String, Double> entry : musicalBasedScores.entrySet()) {
+            String musicalId = entry.getKey();
+            double score = entry.getValue() * MUSICAL_CF_WEIGHT;
+            
             if (candidateMap.containsKey(musicalId)) {
+                // 기존 후보에 뮤지컬 CF 점수 추가
                 CandidateItem existing = candidateMap.get(musicalId);
-                existing.setCfCrossScore(item.getCfCrossScore());
+                existing.setMusicalCfScore(score);
+                existing.setCfCrossScore(existing.getCfCrossScore() + score);
             } else {
-                candidateMap.put(musicalId, item);
-            }
-        }
-
-        // 크롤링 데이터 후보 추가 (인기도 부스트)
-        for (CandidateItem item : crawledCandidates) {
-            Long musicalId = item.getMusicalId();
-            if (candidateMap.containsKey(musicalId)) {
-                CandidateItem existing = candidateMap.get(musicalId);
-                // 크롤링 데이터가 있으면 인기도 점수 부스트
-                existing.setPopularityScore(Math.max(existing.getPopularityScore(), item.getPopularityScore()));
-            } else {
-                candidateMap.put(musicalId, item);
-            }
-        }
-
-        // 5) 보조 점수 계산 및 최종 점수 산출
-        List<CandidateItem> finalCandidates = candidateMap.values().stream()
-                .map(item -> calculateFinalScore(item, region))
-                .sorted((a, b) -> Double.compare(b.getStage1Score(), a.getStage1Score()))
-                .limit(topM)
-                .collect(Collectors.toList());
-
-        log.info("Generated {} candidates for user: {} (content: {}, cf: {}, crawled: {})",
-                finalCandidates.size(), user.getId(),
-                contentCandidates.size(), cfCandidates.size(), crawledCandidates.size());
-        return finalCandidates;
-    }
-
-    /**
-     * 콘텐츠 기반 후보 생성 (content_cross)
-     */
-    private List<CandidateItem> generateContentBasedCandidates(UserMusicProfileDto userProfile, int topK) {
-        List<CandidateItem> candidates = new ArrayList<>();
-
-        // 모든 뮤지컬의 팬 프로필과 사용자 프로필 간 코사인 유사도 계산
-        List<Musical> allMusicals = musicalRepository.findAll();
-
-        for (Musical musical : allMusicals) {
-            List<MusicalFanProfile> fanProfiles = musicalFanProfileRepository.findByMusical(musical);
-
-            if (!fanProfiles.isEmpty()) {
-                double contentScore = calculateContentCrossScore(userProfile, fanProfiles);
-
+                // 새 후보 생성
+                Optional<Musical> musicalOpt = findMusicalByInterparkId(musicalId);
+                if (musicalOpt.isEmpty()) continue;
+                
+                Musical musical = musicalOpt.get();
                 CandidateItem candidate = CandidateItem.builder()
                         .musicalId(musical.getId())
                         .title(musical.getTitle())
-                        .contentCrossScore(contentScore)
-                        .cfCrossScore(0.0)
+                        .contentCrossScore(0.0)
+                        .cfCrossScore(score)
                         .sideScore(0.0)
                         .genre(musical.getGenre())
                         .region(musical.getRegion())
                         .isOnSale(musical.getIsOnSale())
                         .isNew(musical.getIsNew())
                         .popularityScore(musical.getPopularityScore())
-                        .source("content")
+                        .source("musical_cf")
+                        .musicCfScore(0.0)
+                        .musicalCfScore(score)
                         .build();
-
-                candidates.add(candidate);
+                candidateMap.put(musicalId, candidate);
             }
         }
 
-        return candidates.stream()
-                .sorted((a, b) -> Double.compare(b.getContentCrossScore(), a.getContentCrossScore()))
-                .limit(topK)
+        // 7) 인기도 점수 추가 (20%)
+        for (CandidateItem candidate : candidateMap.values()) {
+            double popularityScore = popularityScores.getOrDefault(candidate.getMusicalId(), 0.0);
+            double popularityContribution = popularityScore * POPULARITY_WEIGHT;
+            candidate.setPopularityScore(popularityScore);
+            candidate.setCfCrossScore(candidate.getCfCrossScore() + popularityContribution);
+        }
+
+        // 8) 최종 점수 계산 및 정렬
+        List<CandidateItem> finalCandidates = candidateMap.values().stream()
+                .peek(item -> {
+                    // Stage1 점수 = CF 점수 (이미 가중치 적용됨)
+                    item.setStage1Score(item.getCfCrossScore());
+                    
+                    // 추천 이유 설정
+                    setRecommendationReason(item);
+                })
+                .sorted((a, b) -> Double.compare(b.getStage1Score(), a.getStage1Score()))
+                .limit(topM)
                 .collect(Collectors.toList());
+
+        log.info("✅ Generated {} candidates (Music CF: {}, Musical CF: {}, Total: {})",
+                finalCandidates.size(),
+                (int) finalCandidates.stream().filter(c -> c.getMusicCfScore() > 0).count(),
+                (int) finalCandidates.stream().filter(c -> c.getMusicalCfScore() > 0).count(),
+                candidateMap.size());
+
+        return finalCandidates;
     }
 
     /**
-     * 협업 필터링 후보 생성 (cf_cross)
+     * Interpark ID로 Musical 찾기
      */
-    private List<CandidateItem> generateCollaborativeFilteringCandidates(User user, int topK) {
-        List<CandidateItem> candidates = new ArrayList<>();
+    private Optional<Musical> findMusicalByInterparkId(String interparkId) {
+        return musicalRepository.findAll().stream()
+                .filter(m -> interparkId.equals(m.getInterparkId()))
+                .findFirst();
+    }
 
-        // 1) 유사한 사용자들 찾기 (음악 취향 기반)
-        List<User> similarUsers = findSimilarUsers(user, 50); // Top-50 유사 사용자
-
-        if (similarUsers.isEmpty()) {
-            return candidates;
+    /**
+     * 인기도 점수 계산 (크롤링 데이터 기반)
+     */
+    private Map<Long, Double> getPopularityScores() {
+        List<Musical> allMusicals = musicalRepository.findAll();
+        Map<Long, Double> scores = new HashMap<>();
+        
+        // popularityScore 정규화 (0~1 범위)
+        double maxScore = allMusicals.stream()
+                .mapToDouble(m -> m.getPopularityScore() != null ? m.getPopularityScore() : 0.0)
+                .max()
+                .orElse(1.0);
+        
+        if (maxScore > 0) {
+            for (Musical musical : allMusicals) {
+                double normalized = (musical.getPopularityScore() != null ? musical.getPopularityScore() : 0.0) / maxScore;
+                scores.put(musical.getId(), normalized);
+            }
         }
+        
+        return scores;
+    }
 
-        // 2) 유사 사용자들이 높게 평가한 뮤지컬들 수집
-        List<InteractionLog> highRatings = interactionLogRepository.findHighRatingsByUser(user, 4.0);
-        Set<Long> userRatedMusicals = highRatings.stream()
-                .map(log -> log.getMusical().getId())
-                .collect(Collectors.toSet());
-
-        Map<Long, Double> musicalScores = new HashMap<>();
-        Map<Long, String> musicalTitles = new HashMap<>();
-
-        for (User similarUser : similarUsers) {
-            List<InteractionLog> similarUserRatings = interactionLogRepository
-                    .findHighRatingsByUser(similarUser, 4.0);
-
-            double userSimilarity = calculateUserSimilarity(user, similarUser);
-
-            for (InteractionLog rating : similarUserRatings) {
-                Long musicalId = rating.getMusical().getId();
-
-                // 이미 평가한 뮤지컬은 제외
-                if (!userRatedMusicals.contains(musicalId)) {
-                    double normalizedRating = (rating.getRatingValue() - 2.5) / 2.5; // [-1, 1] 정규화
-                    double weightedScore = userSimilarity * normalizedRating;
-
-                    musicalScores.merge(musicalId, weightedScore, Double::sum);
-                    musicalTitles.putIfAbsent(musicalId, rating.getMusical().getTitle());
+    /**
+     * ✨ 새로운 추천 이유 설정 (평점 기반 CF)
+     * 가장 높은 점수를 기준으로 추천 이유를 결정
+     */
+    private void setRecommendationReason(CandidateItem item) {
+        double musicCfScore = item.getMusicCfScore() != null ? item.getMusicCfScore() : 0.0;
+        double musicalCfScore = item.getMusicalCfScore() != null ? item.getMusicalCfScore() : 0.0;
+        double popularityScore = item.getPopularityScore() != null ? item.getPopularityScore() : 0.0;
+        
+        // 가중치가 적용된 기여도 (이미 가중치가 적용된 상태)
+        double musicContribution = musicCfScore;
+        double musicalContribution = musicalCfScore;
+        double popularityContribution = popularityScore * POPULARITY_WEIGHT;
+        
+        log.info("🎯 Setting recommendation reason for '{}' (ID: {})", item.getTitle(), item.getMusicalId());
+        log.info("  📊 Scores:");
+        log.info("    - Music CF (음악 취향 CF): {} (weight: {}%) → contribution: {}", 
+                 musicCfScore, (int)(MUSIC_CF_WEIGHT * 100), musicContribution);
+        log.info("    - Musical CF (뮤지컬 취향 CF): {} (weight: {}%) → contribution: {}", 
+                 musicalCfScore, (int)(MUSICAL_CF_WEIGHT * 100), musicalContribution);
+        log.info("    - Popularity (인기차트): {} (weight: {}%) → contribution: {}", 
+                 popularityScore, (int)(POPULARITY_WEIGHT * 100), popularityContribution);
+        
+        // 가장 높은 기여도 찾기
+        double maxContribution = Math.max(Math.max(musicContribution, musicalContribution), popularityContribution);
+        
+        if (maxContribution > 0) {
+            if (maxContribution == musicalContribution) {
+                // 뮤지컬 취향 기반 추천 (50% - 가장 높은 가중치)
+                double similarityPercent = (musicalCfScore / MUSICAL_CF_WEIGHT) * 100;
+                item.setSimilarityPercentage(Math.min(similarityPercent, 100.0));
+                item.setRecommendationReason(
+                    String.format("뮤지컬 취향이 %.0f%% 유사한 사용자가 높게 평가한 작품입니다", 
+                                Math.min(similarityPercent, 100.0))
+                );
+                log.info("  ✅ Reason: 뮤지컬 취향 CF ({}%)", (int)Math.min(similarityPercent, 100.0));
+            } else if (maxContribution == musicContribution) {
+                // 음악 취향 기반 추천 (30%)
+                double similarityPercent = (musicCfScore / MUSIC_CF_WEIGHT) * 100;
+                item.setSimilarityPercentage(Math.min(similarityPercent, 100.0));
+                item.setRecommendationReason(
+                    String.format("음악 취향이 %.0f%% 유사한 사용자가 높게 평가한 작품입니다", 
+                                Math.min(similarityPercent, 100.0))
+                );
+                log.info("  ✅ Reason: 음악 취향 CF ({}%)", (int)Math.min(similarityPercent, 100.0));
+            } else if (maxContribution == popularityContribution) {
+                // 인기차트 기반 추천 (20%)
+                if (item.getChartRanking() != null) {
+                    item.setRecommendationReason(
+                        String.format("인기차트 %d위 작품입니다", item.getChartRanking())
+                    );
+                    log.info("  ✅ Reason: 인기차트 {}위", item.getChartRanking());
+                } else {
+                    int ranking = (int) Math.ceil((1.0 - popularityScore) * 50) + 1;
+                    item.setChartRanking(ranking);
+                    item.setRecommendationReason(
+                        String.format("인기차트 %d위 작품입니다", ranking)
+                    );
+                    log.info("  ✅ Reason: 인기차트 {}위 (calculated)", ranking);
                 }
             }
+        } else {
+            // 모든 점수가 0인 경우
+            item.setRecommendationReason("추천 작품입니다");
+            log.info("  ⚠️ Reason: 기본 메시지 (모든 점수가 0)");
         }
-
-        // 3) 점수 기준으로 정렬하여 후보 생성
-        candidates = musicalScores.entrySet().stream()
-                .sorted(Map.Entry.<Long, Double>comparingByValue().reversed())
-                .limit(topK)
-                .map(entry -> CandidateItem.builder()
-                        .musicalId(entry.getKey())
-                        .title(musicalTitles.get(entry.getKey()))
-                        .contentCrossScore(0.0)
-                        .cfCrossScore(entry.getValue())
-                        .sideScore(0.0)
-                        .source("cf")
-                        .build())
-                .collect(Collectors.toList());
-
-        return candidates;
+        
+        log.info("  📝 Final reason: '{}'", item.getRecommendationReason());
     }
 
-    /**
-     * 콘텐츠 기반 점수 계산 (코사인 유사도)
-     */
-    private double calculateContentCrossScore(UserMusicProfileDto userProfile,
-                                            List<MusicalFanProfile> fanProfiles) {
-        Map<String, Double> userGenres = userProfile.getNormalizedPreferences();
-        Map<String, Double> fanGenres = new HashMap<>();
 
-        // 팬 프로필을 장르별로 집계
-        for (MusicalFanProfile fanProfile : fanProfiles) {
-            fanGenres.put(fanProfile.getGenreName(), fanProfile.getFanPreferenceScore());
-        }
 
-        // 팬 프로필 정규화
-        fanGenres = normalizeVector(fanGenres);
-
-        // 코사인 유사도 계산
-        return calculateCosineSimilarity(userGenres, fanGenres);
-    }
-
-    /**
-     * 사용자 간 유사도 계산
-     */
-    private double calculateUserSimilarity(User user1, User user2) {
-        UserMusicProfileDto profile1 = loadUserMusicProfile(user1);
-        UserMusicProfileDto profile2 = loadUserMusicProfile(user2);
-
-        return calculateCosineSimilarity(
-                profile1.getNormalizedPreferences(),
-                profile2.getNormalizedPreferences()
-        );
-    }
-
-    /**
-     * 유사한 사용자들 찾기
-     */
-    private List<User> findSimilarUsers(User user, int topK) {
-        // 실제 구현에서는 더 효율적인 방법 (예: LSH, 근사 최근접 이웃) 사용 가능
-        // 여기서는 간단한 구현
-        UserMusicProfileDto userProfile = loadUserMusicProfile(user);
-        List<User> allUsers = userRepository.findAll();
-
-        return allUsers.stream()
-                .filter(u -> !u.getId().equals(user.getId()))
-                .map(u -> new AbstractMap.SimpleEntry<>(u, calculateUserSimilarity(user, u)))
-                .filter(entry -> entry.getValue() > 0.1) // 최소 유사도 임계값
-                .sorted(Map.Entry.<User, Double>comparingByValue().reversed())
-                .limit(topK)
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * 최종 점수 계산 (Stage-1)
-     */
-    private CandidateItem calculateFinalScore(CandidateItem item, String region) {
-        double sideScore = calculateSideScore(item, region);
-        item.setSideScore(sideScore);
-
-        double finalScore = CONTENT_WEIGHT * item.getContentCrossScore() +
-                           CF_WEIGHT * item.getCfCrossScore() +
-                           SIDE_WEIGHT * sideScore;
-
-        item.setStage1Score(finalScore);
-        return item;
-    }
-
-    /**
-     * 보조 점수 계산 (지역, 판매중, 신작 등)
-     */
-    private double calculateSideScore(CandidateItem item, String region) {
-        double score = 0.0;
-
-        // 지역 일치 가점
-        if (region != null && region.equals(item.getRegion())) {
-            score += 0.3;
-        }
-
-        // 판매중 가점
-        if (Boolean.TRUE.equals(item.getIsOnSale())) {
-            score += 0.4;
-        }
-
-        // 신작 가점
-        if (Boolean.TRUE.equals(item.getIsNew())) {
-            score += 0.2;
-        }
-
-        // 인기도 가점 (0-1 정규화)
-        if (item.getPopularityScore() != null) {
-            score += item.getPopularityScore() * 0.1;
-        }
-
-        return Math.min(score, 1.0); // 최대 1.0으로 제한
-    }
-
-    /**
-     * 코사인 유사도 계산
-     */
-    private double calculateCosineSimilarity(Map<String, Double> vector1, Map<String, Double> vector2) {
-        Set<String> commonKeys = new HashSet<>(vector1.keySet());
-        commonKeys.retainAll(vector2.keySet());
-
-        if (commonKeys.isEmpty()) {
-            return 0.0;
-        }
-
-        double dotProduct = 0.0;
-        double norm1 = 0.0;
-        double norm2 = 0.0;
-
-        for (String key : commonKeys) {
-            double val1 = vector1.get(key);
-            double val2 = vector2.get(key);
-
-            dotProduct += val1 * val2;
-            norm1 += val1 * val1;
-            norm2 += val2 * val2;
-        }
-
-        if (norm1 == 0.0 || norm2 == 0.0) {
-            return 0.0;
-        }
-
-        return dotProduct / (Math.sqrt(norm1) * Math.sqrt(norm2));
-    }
-
-    /**
-     * 벡터 정규화
-     */
-    private Map<String, Double> normalizeVector(Map<String, Double> vector) {
-        double norm = Math.sqrt(vector.values().stream()
-                .mapToDouble(v -> v * v)
-                .sum());
-
-        if (norm == 0.0) {
-            return vector;
-        }
-
-        return vector.entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> entry.getValue() / norm
-                ));
-    }
-
-    /**
-     * 사용자 음악 프로필 로드
-     */
-    private UserMusicProfileDto loadUserMusicProfile(User user) {
-        List<UserMusicProfile> profiles = userMusicProfileRepository.findByUser(user);
-
-        Map<String, Double> genrePreferences = profiles.stream()
-                .collect(Collectors.toMap(
-                        UserMusicProfile::getGenreName,
-                        UserMusicProfile::getPreferenceScore
-                ));
-
-        Map<String, Double> normalizedPreferences = normalizeVector(genrePreferences);
-
-        int totalRatings = profiles.stream()
-                .mapToInt(UserMusicProfile::getRatingCount)
-                .sum();
-
-        return UserMusicProfileDto.builder()
-                .userId(user.getId())
-                .genrePreferences(genrePreferences)
-                .normalizedPreferences(normalizedPreferences)
-                .totalRatings(totalRatings)
-                .profileStrength(Math.min(totalRatings / 50.0, 1.0)) // 50개 평점에서 최대 강도
-                .build();
-    }
 
     /**
      * 신규 사용자 콜드스타트 처리
@@ -400,142 +305,6 @@ public class Stage1CandidateService {
                         .source("popularity")
                         .build())
                 .collect(Collectors.toList());
-    }
-
-    /**
-     * 크롤링 데이터 기반 인기 후보 생성
-     * integrated_weekly_dataset과 integrated_monthly_dataset 활용
-     */
-    private List<CandidateItem> generateCrawledDataCandidates(int topK) {
-        List<CandidateItem> candidates = new ArrayList<>();
-
-        try {
-            // 주간 인기 뮤지컬 (최신 트렌드 반영)
-            List<CrawledMusicalRanking> weeklyPopular =
-                    crawledDataService.getTopWeeklyMusicals(topK / 2);
-
-            // 월간 인기 뮤지컬 (안정적인 인기작)
-            List<CrawledMusicalRanking> monthlyPopular =
-                    crawledDataService.getTopMonthlyMusicals(topK / 2);
-
-            // 주간 인기 뮤지컬 후보 생성
-            for (CrawledMusicalRanking ranking : weeklyPopular) {
-                CandidateItem candidate = createCandidateFromCrawledData(ranking, "weekly");
-                if (candidate != null) {
-                    candidates.add(candidate);
-                }
-            }
-
-            // 월간 인기 뮤지컬 후보 생성
-            for (CrawledMusicalRanking ranking : monthlyPopular) {
-                CandidateItem candidate = createCandidateFromCrawledData(ranking, "monthly");
-                if (candidate != null) {
-                    candidates.add(candidate);
-                }
-            }
-
-            log.debug("Generated {} crawled data candidates", candidates.size());
-
-        } catch (Exception e) {
-            log.error("Error generating crawled data candidates", e);
-        }
-
-        return candidates;
-    }
-
-    /**
-     * CrawledMusicalRanking을 CandidateItem으로 변환
-     */
-    private CandidateItem createCandidateFromCrawledData(CrawledMusicalRanking ranking, String source) {
-        try {
-            // KOPIS Musical과 매칭 시도
-            Optional<Musical> matchedMusical = findMatchingKopisMusical(ranking);
-
-            if (matchedMusical.isEmpty()) {
-                log.debug("No matching KOPIS musical found for: {}", ranking.getTitle());
-                return null;
-            }
-
-            Musical musical = matchedMusical.get();
-
-            // 크롤링 데이터 기반 인기도 점수 계산
-            double popularityScore = crawledDataService.calculatePopularityScore(ranking);
-
-            return CandidateItem.builder()
-                    .musicalId(musical.getId())
-                    .title(musical.getTitle())
-                    .contentCrossScore(0.0)
-                    .cfCrossScore(0.0)
-                    .sideScore(popularityScore * CRAWLED_WEIGHT)
-                    .genre(musical.getGenre())
-                    .region(musical.getRegion())
-                    .isOnSale(musical.getIsOnSale())
-                    .isNew(musical.getIsNew())
-                    .popularityScore(popularityScore)
-                    .source("crawled_" + source)
-                    .build();
-
-        } catch (Exception e) {
-            log.error("Error creating candidate from crawled data", e);
-            return null;
-        }
-    }
-
-    /**
-     * 크롤링 데이터와 매칭되는 KOPIS Musical 찾기
-     */
-    private Optional<Musical> findMatchingKopisMusical(CrawledMusicalRanking ranking) {
-        String normalizedTitle = normalizeTitle(ranking.getTitle());
-
-        // 모든 KOPIS Musical 조회하여 유사도 기반 매칭
-        List<Musical> allMusicals = musicalRepository.findAll();
-
-        return allMusicals.stream()
-                .map(m -> new AbstractMap.SimpleEntry<>(
-                        m,
-                        calculateTitleSimilarity(normalizedTitle, normalizeTitle(m.getTitle()))
-                ))
-                .filter(entry -> entry.getValue() > 0.7) // 70% 이상 유사도
-                .max(Comparator.comparing(Map.Entry::getValue))
-                .map(Map.Entry::getKey);
-    }
-
-    /**
-     * 제목 정규화
-     */
-    private String normalizeTitle(String title) {
-        if (title == null) return "";
-
-        return title
-                .replaceAll("[\\[\\]()\\<\\>〈〉]", " ")
-                .replaceAll("뮤지컬", "")
-                .replaceAll("[^\\w\\s가-힣a-zA-Z0-9]", " ")
-                .replaceAll("\\s+", " ")
-                .trim()
-                .toLowerCase();
-    }
-
-    /**
-     * 제목 유사도 계산 (간단한 버전)
-     */
-    private double calculateTitleSimilarity(String s1, String s2) {
-        if (s1.equals(s2)) return 1.0;
-        if (s1.isEmpty() || s2.isEmpty()) return 0.0;
-
-        // 포함 관계 체크
-        if (s1.contains(s2) || s2.contains(s1)) return 0.85;
-
-        // 단어 기반 유사도
-        Set<String> words1 = new HashSet<>(Arrays.asList(s1.split("\\s+")));
-        Set<String> words2 = new HashSet<>(Arrays.asList(s2.split("\\s+")));
-
-        Set<String> intersection = new HashSet<>(words1);
-        intersection.retainAll(words2);
-
-        Set<String> union = new HashSet<>(words1);
-        union.addAll(words2);
-
-        return union.isEmpty() ? 0.0 : (double) intersection.size() / union.size();
     }
 }
 

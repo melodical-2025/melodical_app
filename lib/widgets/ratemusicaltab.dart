@@ -63,22 +63,28 @@ class _RateMusicalTabState extends State<RateMusicalTab> {
         print('🔍 Loading user ratings...');
         final myRatings = await ApiService.getMyRatings();
         print('✅ Loaded ${myRatings.length} user ratings');
-        setState(() {
-          _ratings.addAll(myRatings);
-        });
+        if (mounted) {
+          setState(() {
+            _ratings.addAll(myRatings);
+          });
+        }
       } catch (e) {
         print('⚠️ Failed to load user ratings (may not be logged in): $e');
         // 로그인하지 않았거나 평점이 없는 경우는 무시
       }
     } catch (e) {
       print('❌ Error loading musicals: $e');
-      setState(() {
-        _error = e.toString();
-      });
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+        });
+      }
     } finally {
-      setState(() {
-        _loading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
     }
   }
 

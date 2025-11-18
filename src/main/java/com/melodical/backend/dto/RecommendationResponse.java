@@ -34,6 +34,14 @@ public class RecommendationResponse {
     // 추천 이유 (설명가능성)
     private List<String> reasons;
     private Integer position; // 추천 목록에서의 위치
+    private String recommendationReason;  // 주요 추천 이유 (단일 문자열)
+    private Double similarityPercentage;  // 유사도 퍼센트 (0-100)
+    private Integer chartRanking;          // 인기차트 순위 (있는 경우)
+
+    // Integrated 데이터 추가 필드 (평점 및 URL)
+    private Double averageRating;    // 평균 평점
+    private String interparkUrl;     // 인터파크 URL
+    private String yes24Url;         // Yes24 URL
 
     // 메타데이터
     private String recommendationId; // 추천 세션 ID

@@ -441,14 +441,22 @@ class ApiService {
     int count = 20,
     String? region,
   }) async {
-    final resp = await post('/api/app/recommendations', {
+    print('📡 API: Calling recommendations endpoint for userId=$userId, surface=$surface, count=$count');
+    final requestBody = {
       'userId': userId,
       'surface': surface,
       'count': count,
       if (region != null) 'region': region,
-    });
-
+    };
+    print('📡 API: Request body: $requestBody');
+    
+    final resp = await post('/api/app/recommendations', requestBody);
+    print('📡 API: Response status: ${resp.statusCode}');
+    print('📡 API: Response body length: ${resp.bodyBytes.length}');
+    
     final List<dynamic> data = jsonDecode(utf8.decode(resp.bodyBytes));
+    print('📡 API: Decoded ${data.length} recommendations');
+    
     return data.cast<Map<String, dynamic>>();
   }
 

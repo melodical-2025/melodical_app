@@ -27,13 +27,16 @@ public class MusicalSyncService {
     /**
      * 크롤링 데이터를 Musical 엔티티로 동기화
      * - posterUrl을 포함한 모든 정보 업데이트
+     * - 트랜잭션을 개별 처리하여 타임아웃 방지
      */
-    @Transactional
     public int syncCrawledDataToMusicals() {
         log.info("Starting to sync crawled data to Musical entities");
 
-        // 최신 월간 데이터 가져오기
+        // 최신 월간 데이터 가져오기 (읽기 전용)
         List<CrawledMusicalRanking> rankings = crawledRepository.findLatestByRankingType("MONTHLY");
+        
+        // 전체 Musical 리스트 미리 로드 (성능 최적화)
+        List<Musical> allMusicals = musicalRepository.findAll();
 
         int syncCount = 0;
         int createCount = 0;
@@ -41,29 +44,12 @@ public class MusicalSyncService {
 
         for (CrawledMusicalRanking ranking : rankings) {
             try {
-                // 1순위: Interpark ID로 찾기
-                Optional<Musical> existingMusical = findMusicalByInterparkId(ranking.getInterparkId());
-                
-                // 2순위: 제목으로 찾기
-                if (existingMusical.isEmpty()) {
-                    existingMusical = findMusicalByTitle(ranking.getTitle());
-                }
-
-                if (existingMusical.isPresent()) {
-                    // 기존 Musical 업데이트
-                    Musical musical = existingMusical.get();
-                    updateMusicalFromRanking(musical, ranking);
-                    musicalRepository.save(musical);
-                    updateCount++;
-                    log.debug("Updated Musical: {} with posterUrl: {}",
-                             musical.getTitle(), musical.getPosterUrl());
-                } else {
-                    // 새로운 Musical 생성
-                    Musical musical = createMusicalFromRanking(ranking);
-                    musicalRepository.save(musical);
+                // 각 Musical을 개별 트랜잭션으로 처리
+                boolean created = syncSingleMusical(ranking, allMusicals);
+                if (created) {
                     createCount++;
-                    log.debug("Created new Musical: {} with posterUrl: {}",
-                             musical.getTitle(), musical.getPosterUrl());
+                } else {
+                    updateCount++;
                 }
                 syncCount++;
             } catch (Exception e) {
@@ -76,13 +62,42 @@ public class MusicalSyncService {
 
         return syncCount;
     }
+    
+    /**
+     * 단일 Musical 동기화 (개별 트랜잭션)
+     */
+    @Transactional
+    private boolean syncSingleMusical(CrawledMusicalRanking ranking, List<Musical> allMusicals) {
+        // 1순위: Interpark ID로 찾기
+        Optional<Musical> existingMusical = findMusicalByInterparkId(ranking.getInterparkId(), allMusicals);
+        
+        // 2순위: 제목으로 찾기
+        if (existingMusical.isEmpty()) {
+            existingMusical = findMusicalByTitle(ranking.getTitle(), allMusicals);
+        }
+
+        if (existingMusical.isPresent()) {
+            // 기존 Musical 업데이트
+            Musical musical = existingMusical.get();
+            updateMusicalFromRanking(musical, ranking);
+            musicalRepository.save(musical);
+            log.debug("Updated Musical: {} with posterUrl: {}",
+                     musical.getTitle(), musical.getPosterUrl());
+            return false; // 업데이트
+        } else {
+            // 새로운 Musical 생성
+            Musical musical = createMusicalFromRanking(ranking);
+            musicalRepository.save(musical);
+            log.debug("Created new Musical: {} with posterUrl: {}",
+                     musical.getTitle(), musical.getPosterUrl());
+            return true; // 생성
+        }
+    }
 
     /**
      * 제목으로 Musical 찾기 (정규화된 비교)
      */
-    private Optional<Musical> findMusicalByTitle(String title) {
-        List<Musical> allMusicals = musicalRepository.findAll();
-
+    private Optional<Musical> findMusicalByTitle(String title, List<Musical> allMusicals) {
         String normalizedTitle = normalizeTitle(title);
 
         return allMusicals.stream()
@@ -93,12 +108,11 @@ public class MusicalSyncService {
     /**
      * Interpark ID로 Musical 찾기
      */
-    private Optional<Musical> findMusicalByInterparkId(String interparkId) {
+    private Optional<Musical> findMusicalByInterparkId(String interparkId, List<Musical> allMusicals) {
         if (interparkId == null || interparkId.isEmpty()) {
             return Optional.empty();
         }
         
-        List<Musical> allMusicals = musicalRepository.findAll();
         return allMusicals.stream()
                 .filter(m -> interparkId.equals(m.getInterparkId()))
                 .findFirst();
@@ -121,6 +135,14 @@ public class MusicalSyncService {
         // Interpark ID 업데이트
         if (ranking.getInterparkId() != null) {
             musical.setInterparkId(ranking.getInterparkId());
+        }
+        
+        // URL 업데이트
+        if (ranking.getInterparkUrl() != null && !ranking.getInterparkUrl().trim().isEmpty()) {
+            musical.setInterparkUrl(ranking.getInterparkUrl());
+        }
+        if (ranking.getYes24Url() != null && !ranking.getYes24Url().trim().isEmpty()) {
+            musical.setYes24Url(ranking.getYes24Url());
         }
         
         // posterUrl 업데이트 (가장 중요!)
@@ -178,6 +200,14 @@ public class MusicalSyncService {
         // Interpark ID 설정
         if (ranking.getInterparkId() != null) {
             musical.setInterparkId(ranking.getInterparkId());
+        }
+
+        // URL 설정
+        if (ranking.getInterparkUrl() != null && !ranking.getInterparkUrl().trim().isEmpty()) {
+            musical.setInterparkUrl(ranking.getInterparkUrl());
+        }
+        if (ranking.getYes24Url() != null && !ranking.getYes24Url().trim().isEmpty()) {
+            musical.setYes24Url(ranking.getYes24Url());
         }
 
         // posterUrl 설정
@@ -262,6 +292,80 @@ public class MusicalSyncService {
         }
 
         log.warn("No matching crawled data found for Musical: {}", musical.getTitle());
+        return false;
+    }
+
+    /**
+     * posterUrl이 없는 모든 Musical을 크롤링 데이터로 업데이트
+     * - 트랜잭션을 개별 처리하여 타임아웃 방지
+     */
+    public int fixMissingPosterUrls() {
+        log.info("🔍 Starting to fix missing posterUrls...");
+
+        // posterUrl이 없는 모든 Musical 찾기 (읽기 전용)
+        List<Musical> musicalsWithoutPoster = musicalRepository.findAll().stream()
+                .filter(m -> m.getPosterUrl() == null || m.getPosterUrl().trim().isEmpty())
+                .toList();
+
+        log.info("📊 Found {} musicals without posterUrl", musicalsWithoutPoster.size());
+
+        if (musicalsWithoutPoster.isEmpty()) {
+            log.info("✅ All musicals have posterUrl!");
+            return 0;
+        }
+
+        // 최신 크롤링 데이터 가져오기 (읽기 전용)
+        List<CrawledMusicalRanking> rankings = crawledRepository.findLatestByRankingType("MONTHLY");
+        log.info("📁 Loaded {} crawled rankings", rankings.size());
+
+        int fixedCount = 0;
+
+        for (Musical musical : musicalsWithoutPoster) {
+            try {
+                // 각 Musical을 개별 트랜잭션으로 처리
+                if (fixSingleMusicalPosterUrl(musical, rankings)) {
+                    fixedCount++;
+                }
+            } catch (Exception e) {
+                log.error("❌ Failed to fix posterUrl for: {}", musical.getTitle(), e);
+            }
+        }
+
+        log.info("🎉 Fixed {} out of {} musicals", fixedCount, musicalsWithoutPoster.size());
+        return fixedCount;
+    }
+    
+    /**
+     * 단일 Musical의 posterUrl 수정 (개별 트랜잭션)
+     */
+    @Transactional
+    private boolean fixSingleMusicalPosterUrl(Musical musical, List<CrawledMusicalRanking> rankings) {
+        String normalizedTitle = normalizeTitle(musical.getTitle());
+
+        // 제목으로 매칭되는 크롤링 데이터 찾기
+        Optional<CrawledMusicalRanking> matchingRanking = rankings.stream()
+                .filter(r -> normalizeTitle(r.getTitle()).equals(normalizedTitle))
+                .findFirst();
+
+        if (matchingRanking.isPresent()) {
+            CrawledMusicalRanking ranking = matchingRanking.get();
+            if (ranking.getPosterUrl() != null && !ranking.getPosterUrl().trim().isEmpty()) {
+                String posterUrl = ranking.getPosterUrl();
+                if (posterUrl.startsWith("//")) {
+                    posterUrl = "https:" + posterUrl;
+                }
+                musical.setPosterUrl(posterUrl);
+                musicalRepository.save(musical);
+                log.info("✅ Fixed posterUrl for '{}': {}", 
+                        musical.getTitle(), posterUrl);
+                return true;
+            } else {
+                log.warn("⚠️ Matching ranking found but no posterUrl: {}", musical.getTitle());
+            }
+        } else {
+            log.warn("⚠️ No matching ranking found for: {}", musical.getTitle());
+        }
+        
         return false;
     }
 }

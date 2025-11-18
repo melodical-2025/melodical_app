@@ -1,0 +1,9 @@
+2025-11-18 15:33:02,059 - interpark_improved_crawler - INFO - 📊 인터파크 주간 랭킹 수집 시작...
+2025-11-18 15:33:24,179 - interpark_improved_crawler - INFO - 발견된 랭킹 아이템: 100개
+2025-11-18 15:33:24,186 - interpark_improved_crawler - INFO - ✅ 총 50개 뮤지컬 추출 완료
+2025-11-18 15:33:24,186 - interpark_improved_crawler - INFO -    이미지: 50/50개 (100.0%)
+2025-11-18 15:33:24,186 - interpark_improved_crawler - INFO -    예매율: 50/50개 (100.0%)
+2025-11-18 15:33:24,186 - interpark_improved_crawler - INFO -    공연기간: 50/50개 (100.0%)
+2025-11-18 15:33:24,186 - interpark_improved_crawler - INFO -    공연장: 50/50개 (100.0%)
+2025-11-18 15:34:09,218 - interpark_improved_crawler - INFO - 📊 인터파크 월간 랭킹 수집...
+2025-11-18 15:34:09,218 - interpark_improved_crawler - INFO - 📊 인터파크 주간 랭킹 수집 시작...

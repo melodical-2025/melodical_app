@@ -10,7 +10,7 @@ from datetime import datetime
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from crawlers.interpark_improved import InterparkCrawler
+from crawlers.interpark_improved import InterparkImprovedCrawler
 from crawlers.yes24_new import Yes24Crawler
 from integrator import MusicalDataIntegrator
 from utils import setup_logger, save_to_json, save_to_csv, combine_rankings
@@ -23,7 +23,7 @@ def main():
     
     try:
         # 크롤러 인스턴스 생성
-        interpark = InterparkCrawler()
+        interpark = InterparkImprovedCrawler()
         yes24 = Yes24Crawler()
         
         # 주간 랭킹 수집

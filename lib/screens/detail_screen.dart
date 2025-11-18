@@ -32,6 +32,25 @@ class _DetailScreenState extends State<DetailScreen> {
   @override
   void initState() {
     super.initState();
+    
+    // 디버깅: 받은 데이터 확인
+    print('=== DetailScreen initialized ===');
+    print('musicalData keys: ${widget.musicalData.keys.toList()}');
+    print('All data:');
+    widget.musicalData.forEach((key, value) {
+      print('  $key: $value (type: ${value.runtimeType})');
+    });
+    print('recommendationReason: "${widget.musicalData['recommendationReason']}"');
+    print('recommendationReason is null? ${widget.musicalData['recommendationReason'] == null}');
+    print('recommendationReason is empty? ${widget.musicalData['recommendationReason']?.toString().isEmpty ?? true}');
+    print('similarityPercentage: ${widget.musicalData['similarityPercentage']}');
+    print('chartRanking: ${widget.musicalData['chartRanking']}');
+    print('averageRating: ${widget.musicalData['averageRating']}');
+    print('interparkUrl: ${widget.musicalData['interparkUrl']}');
+    print('yes24Url: ${widget.musicalData['yes24Url']}');
+    print('posterUrl: ${widget.musicalData['posterUrl']}');
+    print('================================');
+    
     _loadComments();
     _loadRecommendedMusicals();
     _loadUserRating();
@@ -534,8 +553,12 @@ class _DetailScreenState extends State<DetailScreen> {
     final posterUrl = widget.musicalData['posterUrl'] ?? '';
     final theater = widget.musicalData['theater'] ?? 'N/A';
     final period = widget.musicalData['period'] ?? 'N/A';
-    final interparkRating = widget.musicalData['interparkRating'];
-    final yes24Rating = widget.musicalData['yes24Rating'];
+    
+    // 평점 정보 - averageRating 우선, 없으면 개별 평점 사용
+    final averageRating = widget.musicalData['averageRating'];
+    final interparkRating = widget.musicalData['interparkRating'] ?? averageRating;
+    final yes24Rating = widget.musicalData['yes24Rating'] ?? averageRating;
+    
     final cast = widget.musicalData['cast'] ?? 'N/A';
     final runtime = widget.musicalData['runtime'] ?? 'N/A';
     final interparkUrl = widget.musicalData['interparkUrl'];
@@ -545,6 +568,9 @@ class _DetailScreenState extends State<DetailScreen> {
     print('🎭 Detail Screen - Musical: $title (ID: ${widget.musicalData['id']})');
     print('🔗 Interpark URL: $interparkUrl (type: ${interparkUrl?.runtimeType}, isEmpty: ${interparkUrl?.toString().isEmpty})');
     print('🔗 Yes24 URL: $yes24Url (type: ${yes24Url?.runtimeType}, isEmpty: ${yes24Url?.toString().isEmpty})');
+    print('⭐ Average Rating: $averageRating');
+    print('⭐ Interpark Rating: $interparkRating');
+    print('⭐ Yes24 Rating: $yes24Rating');
     print('📦 Full musical data keys: ${widget.musicalData.keys.toList()}');
 
     return Scaffold(
@@ -644,6 +670,64 @@ class _DetailScreenState extends State<DetailScreen> {
                     ),
                   ),
                   const SizedBox(height: 8),
+                  
+                  // 추천 이유 배지 (있는 경우에만 표시)
+                  Builder(
+                    builder: (context) {
+                      final reason = widget.musicalData['recommendationReason'];
+                      print('🎯 Building recommendation badge:');
+                      print('  - reason: "$reason"');
+                      print('  - reason type: ${reason.runtimeType}');
+                      print('  - is null: ${reason == null}');
+                      print('  - is empty: ${reason?.toString().isEmpty ?? true}');
+                      
+                      if (reason != null && reason.toString().isNotEmpty) {
+                        print('  ✅ SHOWING recommendation badge');
+                        return Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFE4D6),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: const Color(0xFFE17951),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  widget.musicalData['chartRanking'] != null 
+                                      ? Icons.star 
+                                      : Icons.favorite,
+                                  size: 20,
+                                  color: const Color(0xFFE17951),
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    reason.toString(),
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFFE17951),
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      } else {
+                        print('  ❌ NOT showing recommendation badge');
+                        return const SizedBox.shrink();
+                      }
+                    },
+                  ),
+                  
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16.0),
                     child: Row(

@@ -10,6 +10,8 @@ import com.melodical.backend.repository.CrawledMusicalRankingRepository;
 import com.melodical.backend.repository.MusicalRepository;
 import com.melodical.backend.repository.RatedMusicalRepository;
 import com.melodical.backend.repository.UserRepository;
+import com.melodical.backend.service.recommendation.ProactiveRecommendationService;
+import com.melodical.backend.service.recommendation.MusicalFanProfileService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,8 @@ public class MusicalRatingService {
     private final UserRepository userRepo;
     private final MusicalRepository musicalRepo;
     private final CrawledMusicalRankingRepository crawledRepo;
+    private final MusicalFanProfileService musicalFanProfileService;
+    private final ProactiveRecommendationService proactiveRecommendationService;
 
     @Transactional
     public void saveRatings(MusicalRatingRequest req) {
@@ -99,9 +103,24 @@ public class MusicalRatingService {
 
             log.info("Saved rating for Musical: {} (id: {}), rating: {}",
                     musicalEntity.getTitle(), musicalEntity.getId(), score);
+            
+            // 뮤지컬 팬 프로필 업데이트 (비동기로 처리)
+            try {
+                musicalFanProfileService.updateMusicalFanProfile(musicalEntity);
+            } catch (Exception e) {
+                log.warn("Failed to update musical fan profile, but continuing: {}", e.getMessage());
+            }
         }
 
         log.info("Successfully saved {} ratings for user {}", req.getMusicalRatings().size(), userId);
+        
+        // 사용자의 추천 목록 재생성 (비동기)
+        try {
+            proactiveRecommendationService.refreshRecommendations(userId);
+            log.info("✅ Triggered recommendation refresh for user: {}", userId);
+        } catch (Exception e) {
+            log.warn("Failed to trigger recommendation refresh: {}", e.getMessage());
+        }
     }
 
     /**
@@ -226,30 +245,82 @@ public class MusicalRatingService {
         }
         
         log.info("✅ Batch save completed successfully");
+        
+        // 평점을 저장한 사용자의 추천 목록 재생성 (비동기)
+        if (!ratings.isEmpty()) {
+            try {
+                Object userIdObj = ratings.get(0).get("userId");
+                Long userId = Long.valueOf(userIdObj.toString());
+                proactiveRecommendationService.refreshRecommendations(userId);
+                log.info("✅ Triggered recommendation refresh for user: {}", userId);
+            } catch (Exception e) {
+                log.warn("Failed to trigger recommendation refresh: {}", e.getMessage());
+            }
+        }
     }
     
     /**
      * musicalId를 interparkId(String)로 변환
      * - musicalId가 Long인 경우: Musical 조회 후 interparkId 추출
+     * - Musical이 없으면 CrawledMusicalRanking에서 찾아서 Musical 생성
      * - musicalId가 String인 경우: 그대로 사용
      */
     private String convertToInterparkId(Object musicalIdObj) {
         try {
             Long musicalDbId = Long.valueOf(musicalIdObj.toString());
-            Musical musical = musicalRepo.findById(musicalDbId)
-                    .orElseThrow(() -> {
-                        log.error("❌ Musical not found: musicalId={}", musicalDbId);
-                        return new IllegalArgumentException("Invalid musicalId: " + musicalDbId);
-                    });
             
-            String interparkId = musical.getInterparkId();
-            if (interparkId == null || interparkId.isEmpty()) {
-                log.warn("⚠️ Musical {} has no interparkId, using id as fallback", musicalDbId);
-                return musicalDbId.toString();
+            // 1. Musical에서 찾기
+            Optional<Musical> musicalOpt = musicalRepo.findById(musicalDbId);
+            
+            if (musicalOpt.isPresent()) {
+                Musical musical = musicalOpt.get();
+                String interparkId = musical.getInterparkId();
+                if (interparkId == null || interparkId.isEmpty()) {
+                    log.warn("⚠️ Musical {} has no interparkId, using id as fallback", musicalDbId);
+                    return musicalDbId.toString();
+                }
+                log.debug("✅ Musical found: title={}, interparkId={}", musical.getTitle(), interparkId);
+                return interparkId;
             }
             
-            log.debug("✅ Musical found: title={}, interparkId={}", musical.getTitle(), interparkId);
-            return interparkId;
+            // 2. Musical이 없으면 CrawledMusicalRanking에서 찾기
+            Optional<CrawledMusicalRanking> crawledOpt = crawledRepo.findById(musicalDbId);
+            
+            if (crawledOpt.isPresent()) {
+                CrawledMusicalRanking crawled = crawledOpt.get();
+                log.info("✅ Found CrawledMusicalRanking: {} (id: {})", crawled.getTitle(), musicalDbId);
+                
+                // 제목으로 기존 Musical이 있는지 확인
+                String normalizedTitle = normalizeTitle(crawled.getTitle());
+                Optional<Musical> existingMusical = musicalRepo.findAll().stream()
+                        .filter(m -> normalizeTitle(m.getTitle()).equals(normalizedTitle))
+                        .findFirst();
+                
+                Musical musical;
+                if (existingMusical.isPresent()) {
+                    musical = existingMusical.get();
+                    log.info("✅ Found existing Musical by title: {}", musical.getTitle());
+                } else {
+                    // Musical 생성
+                    musical = createMusicalFromCrawled(crawled);
+                    musical = musicalRepo.save(musical);
+                    log.info("✅ Created new Musical: {} (id: {})", musical.getTitle(), musical.getId());
+                }
+                
+                String interparkId = musical.getInterparkId();
+                if (interparkId == null || interparkId.isEmpty()) {
+                    // interparkId가 없으면 crawled ID를 문자열로 사용
+                    interparkId = musicalDbId.toString();
+                    log.warn("⚠️ Musical has no interparkId, using crawled id: {}", interparkId);
+                }
+                
+                return interparkId;
+            }
+            
+            // 3. 둘 다 없으면 에러
+            log.error("❌ Neither Musical nor CrawledMusicalRanking found for id: {}", musicalDbId);
+            throw new IllegalArgumentException("Invalid musicalId: " + musicalDbId);
+            
         } catch (NumberFormatException e) {
             // musicalId가 이미 String인 경우 (interparkId)
             String interparkId = musicalIdObj.toString();

@@ -75,6 +75,11 @@ public class MusicalCrawlerService {
                 int syncCount = musicalSyncService.syncCrawledDataToMusicals();
                 log.info("Musical synchronization completed: {} musicals synced", syncCount);
 
+                // posterUrl이 없는 뮤지컬 복구
+                log.info("🔧 Fixing missing posterUrls on startup...");
+                int fixedCount = musicalSyncService.fixMissingPosterUrls();
+                log.info("✅ Fixed {} musicals with missing posterUrls", fixedCount);
+
             } else {
                 log.warn("No existing crawled data found. Please run crawler manually.");
             }
@@ -132,7 +137,12 @@ public class MusicalCrawlerService {
                     CRAWLER_BASE_PATH, DATA_DIR, latestVersion);
             saveIntegratedDataset(monthlyFile, "MONTHLY", latestVersion);
 
-            // 5. 오래된 데이터 정리 (최근 3개 버전만 유지)
+            // 5. posterUrl이 없는 뮤지컬 복구
+            log.info("🔧 Fixing missing posterUrls...");
+            int fixedCount = musicalSyncService.fixMissingPosterUrls();
+            log.info("✅ Fixed {} musicals with missing posterUrls", fixedCount);
+
+            // 6. 오래된 데이터 정리 (최근 3개 버전만 유지)
             cleanupOldData(3);
 
             log.info("Crawling and data saving completed successfully");
@@ -165,7 +175,7 @@ public class MusicalCrawlerService {
                     new InputStreamReader(process.getInputStream()))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    log.debug("Crawler output: {}", line);
+                    log.info("Crawler output: {}", line);
                 }
             }
 
@@ -282,31 +292,51 @@ public class MusicalCrawlerService {
                 return;
             }
 
-            log.info("Loading data from: {}", filePath);
+            log.info("📁 Loading data from: {}", filePath);
 
             // JSON 파일 읽기
             String jsonContent = Files.readString(path);
             JsonNode rootNode = objectMapper.readTree(jsonContent);
+            
+            log.info("📊 Parsed {} nodes from JSON (rankingType: {})", rootNode.size(), rankingType);
 
             List<CrawledMusicalRanking> rankings = new ArrayList<>();
             LocalDateTime crawledAt = LocalDateTime.now();
 
             // JSON 배열 파싱
             if (rootNode.isArray()) {
+                int index = 0;
                 for (JsonNode node : rootNode) {
                     CrawledMusicalRanking ranking = parseMusicalData(node, rankingType, dataVersion, crawledAt);
                     if (ranking != null) {
                         rankings.add(ranking);
+                        log.debug("✅ Added ranking #{}: {}", ++index, ranking.getTitle());
                     }
                 }
             }
 
             // DB에 저장
             if (!rankings.isEmpty()) {
-                crawledRepository.saveAll(rankings);
-                log.info("Saved {} {} rankings to database", rankings.size(), rankingType);
+                log.info("💾 Attempting to save {} {} rankings to database...", rankings.size(), rankingType);
+                
+                // 저장 전 샘플 로그 (첫 번째 항목)
+                if (!rankings.isEmpty()) {
+                    CrawledMusicalRanking sample = rankings.get(0);
+                    log.info("📋 Sample before save - title: '{}', posterUrl: '{}', interparkUrl: '{}'",
+                             sample.getTitle(), sample.getPosterUrl(), sample.getInterparkUrl());
+                }
+                
+                List<CrawledMusicalRanking> saved = crawledRepository.saveAll(rankings);
+                log.info("✅ Successfully saved {} {} rankings to database", saved.size(), rankingType);
+                
+                // 저장 후 샘플 로그 (첫 번째 항목)
+                if (!saved.isEmpty()) {
+                    CrawledMusicalRanking sample = saved.get(0);
+                    log.info("📋 Sample after save - id: {}, title: '{}', posterUrl: '{}', interparkUrl: '{}'",
+                             sample.getId(), sample.getTitle(), sample.getPosterUrl(), sample.getInterparkUrl());
+                }
             } else {
-                log.warn("No data to save for {}", rankingType);
+                log.warn("⚠️ No data to save for {}", rankingType);
             }
 
         } catch (Exception e) {
@@ -328,14 +358,49 @@ public class MusicalCrawlerService {
 
             // posterUrl 처리
             String imageUrl = getStringValue(node, "image_url");
-            log.debug("Processing musical: {} - image_url: {}",
+            log.info("📷 Processing musical: '{}' - image_url: '{}'",
                      getStringValue(node, "title"), imageUrl);
 
-            // Interpark URL에서 ID 추출 (마지막 8자리 숫자)
-            String interparkUrl = getStringValue(node, "detail_url");
+            // URL 매핑 - source에 따라 올바르게 분류
+            String source = getStringValue(node, "source");
+            String detailUrl = getStringValue(node, "detail_url");
+            String yes24DetailUrl = getStringValue(node, "yes24_detail_url");
+            
+            String interparkUrl = null;
+            String yes24Url = null;
+            
+            if ("yes24".equals(source)) {
+                // Yes24 전용: detail_url이 Yes24 URL
+                yes24Url = detailUrl;
+                if (yes24DetailUrl != null) {
+                    yes24Url = yes24DetailUrl; // yes24_detail_url 우선
+                }
+            } else if ("interpark".equals(source)) {
+                // Interpark 전용: detail_url이 Interpark URL
+                interparkUrl = detailUrl;
+            } else if ("both".equals(source)) {
+                // 양쪽 모두: detail_url은 Interpark, yes24_detail_url은 Yes24
+                interparkUrl = detailUrl;
+                yes24Url = yes24DetailUrl;
+            } else {
+                // source 불명: detail_url이 Interpark URL일 가능성 높음
+                if (detailUrl != null && detailUrl.contains("interpark.com")) {
+                    interparkUrl = detailUrl;
+                } else if (detailUrl != null && detailUrl.contains("yes24.com")) {
+                    yes24Url = detailUrl;
+                }
+                if (yes24DetailUrl != null) {
+                    yes24Url = yes24DetailUrl;
+                }
+            }
+            
+            // Interpark URL에서 ID 추출
             String interparkId = extractInterparkId(interparkUrl);
+            
+            log.info("🔗 source: '{}', interparkUrl: '{}', yes24Url: '{}'",
+                     source, interparkUrl, yes24Url);
 
-            return CrawledMusicalRanking.builder()
+            CrawledMusicalRanking ranking = CrawledMusicalRanking.builder()
                     .title(getStringValue(node, "title"))
                     .interparkId(interparkId)
                     .normalizedTitle(getStringValue(node, "normalized_title"))
@@ -357,11 +422,16 @@ public class MusicalCrawlerService {
                     .description(getStringValue(node, "description"))
                     .posterUrl(imageUrl)
                     .interparkUrl(interparkUrl)
-                    .yes24Url(getStringValue(node, "yes24_detail_url"))
+                    .yes24Url(yes24Url)
                     .isAvailable(getBooleanValue(node, "is_available"))
                     .crawledAt(crawledAt)
                     .dataVersion(dataVersion)
                     .build();
+            
+            log.info("💾 Built entity - posterUrl: '{}', interparkUrl: '{}', yes24Url: '{}'",
+                     ranking.getPosterUrl(), ranking.getInterparkUrl(), ranking.getYes24Url());
+            
+            return ranking;
         } catch (Exception e) {
             log.error("Error parsing musical data", e);
             return null;

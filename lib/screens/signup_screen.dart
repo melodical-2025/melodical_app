@@ -55,24 +55,38 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     setState(() => _isLoading = true);
-    final resp = await ApiService.signup(email, pwd, nick);
+    
+    try {
+      final resp = await ApiService.signup(email, pwd, nick);
 
-    if (resp.statusCode == 200 || resp.statusCode == 201) {
-      // 백엔드가 바로 JWT를 리턴한다면
-      // final data = jsonDecode(resp.body);
-      // await TokenStorage().save(data['token']);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('회원가입 완료!')),
-      );
-      Navigator.pushReplacementNamed(context, '/musicalpick');
-    } else {
-      final decoded = jsonDecode(utf8.decode(resp.bodyBytes));
-      final error = jsonDecode(resp.body)['message'] ?? '회원가입 오류';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error)),
-      );
+      if (resp.statusCode == 200 || resp.statusCode == 201) {
+        // 백엔드가 JWT를 리턴하므로 토큰 저장
+        final data = jsonDecode(utf8.decode(resp.bodyBytes));
+        final token = data['token'];
+        
+        if (token != null && token.isNotEmpty) {
+          await TokenStorage().saveToken(token);
+          print('✅ Token saved after signup: ${token.substring(0, 20)}...');
+        } else {
+          print('⚠️ No token in signup response');
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('회원가입 완료!')),
+        );
+        Navigator.pushReplacementNamed(context, '/musicalpick');
+      } else {
+        final error = jsonDecode(utf8.decode(resp.bodyBytes))['message'] ?? '회원가입 오류';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(error)),
+        );
+      }
+    } catch (e) {
+      print('❌ Signup error: $e');
+      _showSnack('회원가입 중 오류가 발생했습니다: $e');
+    } finally {
+      setState(() => _isLoading = false);
     }
-    setState(() => _isLoading = false);
   }
 
   Future<void> _signInWithGoogle() async {

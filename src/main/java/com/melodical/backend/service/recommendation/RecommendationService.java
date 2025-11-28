@@ -27,6 +27,7 @@ public class RecommendationService {
     private final Stage3TwiddlerService stage3Service;
     private final RecommendationLoggingService loggingService;
     private final RecommendationCacheService cacheService;
+    private final RatingBasedSimilarityService ratingBasedSimilarityService;
 
     private final UserRepository userRepository;
     private final MusicalRepository musicalRepository;
@@ -107,9 +108,14 @@ public class RecommendationService {
             List<CandidateItem> rankedCandidates = stage2Service.rankCandidatesByPCTR(
                     user, candidates, request);
 
+            // 사용자가 평가한 작품 목록 가져오기 (Stage3에서 인기 작품 보충 시 제외용)
+            Set<String> userRatedMusicals = ratingBasedSimilarityService.getUserRatedMusicalIds(user.getId());
+            log.info("User {} has rated {} musicals (will be excluded from supplements)",
+                    user.getId(), userRatedMusicals.size());
+
             // 5. Stage-3: Twiddler 후처리 (다양성/정책)
             finalCandidates = stage3Service.applyTwiddlerPolicies(
-                    user, rankedCandidates, request);
+                    user, rankedCandidates, request, userRatedMusicals);
 
             // 6. Redis 캐시 저장
             cacheService.cacheRecommendations(request.getUserId(), request.getSurface(), finalCandidates);
@@ -141,12 +147,8 @@ public class RecommendationService {
                 .stream()
                 .collect(Collectors.toMap(Musical::getId, m -> m));
 
-        // CrawledMusicalRanking 데이터 조회 (ID로 직접)
-        Map<Long, CrawledMusicalRanking> crawledMap = crawledMusicalRankingRepository.findAllById(musicalIds)
-                .stream()
-                .collect(Collectors.toMap(CrawledMusicalRanking::getId, c -> c));
-        
-        // ID로 매칭되지 않은 경우를 위해 interparkId로도 매칭 시도
+        // CrawledMusicalRanking 데이터 조회 (interparkId 기반)
+        // 최신 월간 랭킹 데이터를 모두 가져와서 interparkId로 매핑
         List<CrawledMusicalRanking> allCrawledData = crawledMusicalRankingRepository.findLatestByRankingType("MONTHLY");
         Map<String, CrawledMusicalRanking> crawledByInterparkIdMap = new HashMap<>();
         
@@ -163,11 +165,9 @@ public class RecommendationService {
             // Musical 데이터 먼저 가져오기
             Musical musicalData = musicalMap.get(musicalId);
             
-            // CrawledMusicalRanking 데이터 찾기 (여러 방법 시도)
-            CrawledMusicalRanking crawledData = crawledMap.get(musicalId);
-            
-            // ID로 매칭 안 되면 interparkId로 매칭 시도
-            if (crawledData == null && musicalData != null && musicalData.getInterparkId() != null) {
+            // CrawledMusicalRanking 데이터 찾기 (interparkId로 매칭)
+            CrawledMusicalRanking crawledData = null;
+            if (musicalData != null && musicalData.getInterparkId() != null) {
                 crawledData = crawledByInterparkIdMap.get(musicalData.getInterparkId());
             }
 
@@ -195,6 +195,7 @@ public class RecommendationService {
                         .recommendationReason(candidate.getRecommendationReason())
                         .similarityPercentage(candidate.getSimilarityPercentage())
                         .chartRanking(candidate.getChartRanking())
+                        .source(candidate.getSource())
                         .recommendationId(sessionId)
                         .timestamp(System.currentTimeMillis());
 
@@ -342,6 +343,7 @@ public class RecommendationService {
                         .cfCrossScore(0.0)
                         .reasons(List.of("인기 작품", "폴백 추천"))
                         .position(i + 1)
+                        .source("popularity_only")
                         .recommendationId(sessionId)
                         .timestamp(System.currentTimeMillis())
                         .build();

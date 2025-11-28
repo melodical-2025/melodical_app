@@ -206,6 +206,26 @@ class _HomeScreenState extends State<HomeScreen> {
                           width: 100,
                           height: 100,
                           fit: BoxFit.cover,
+                          headers: const {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                          },
+                          errorBuilder: (context, error, stackTrace) {
+                            print('❌ Failed to load music artwork: ${song.artworkUrl}');
+                            print('   Error: $error');
+                            return Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(
+                                Icons.music_note,
+                                size: 40,
+                                color: Colors.grey,
+                              ),
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -336,12 +356,26 @@ class _HomeScreenState extends State<HomeScreen> {
                             width: 100,
                             height: 100,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => Container(
-                              width: 100,
-                              height: 100,
-                              color: Colors.grey.shade200,
-                              child: const Icon(Icons.broken_image),
-                            ),
+                            headers: const {
+                              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                            },
+                            errorBuilder: (context, error, stackTrace) {
+                              print('❌ Failed to load musical poster: ${m.posterUrl}');
+                              print('   Error: $error');
+                              return Container(
+                                width: 100,
+                                height: 100,
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.theaters,
+                                  size: 40,
+                                  color: Colors.grey,
+                                ),
+                              );
+                            },
                           ),
                         ),
                         const SizedBox(height: 8),
@@ -461,6 +495,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             width: 100,
                             height: 130,
                             fit: BoxFit.cover,
+                            headers: const {
+                              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                            },
                             loadingBuilder: (context, child, loadingProgress) {
                               if (loadingProgress == null) return child;
                               return Container(
@@ -477,13 +514,21 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               );
                             },
-                            errorBuilder: (_, __, ___) {
-                              print('❌ Failed to load poster: ${rec['posterUrl']}');
+                            errorBuilder: (context, error, stackTrace) {
+                              print('❌ Failed to load recommendation poster: ${rec['posterUrl']}');
+                              print('   Error: $error');
                               return Container(
                                 width: 100,
                                 height: 130,
-                                color: Colors.grey.shade200,
-                                child: const Icon(Icons.theaters, size: 40),
+                                decoration: BoxDecoration(
+                                  color: Colors.grey.shade300,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.theaters,
+                                  size: 40,
+                                  color: Colors.grey,
+                                ),
                               );
                             },
                           )
@@ -516,93 +561,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
 
           const SizedBox(height: 24),
-
-          // 통계 박스
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                buildStatBoxWidget(
-                  icon: Icons.favorite,
-                  assetPath: null,
-                  label1: '찜한',
-                  label2: '뮤지컬',
-                  count: _ratedMusicals.length + _ratedSongs.length,
-                  textColor: Colors.black,
-                ),
-                buildStatBoxWidget(
-                  icon: null,
-                  assetPath: 'assets/musicalicon.png',
-                  label1: '평가한',
-                  label2: '뮤지컬',
-                  count: _ratedMusicals.length,
-                  textColor: Colors.black,
-                ),
-                buildStatBoxWidget(
-                  icon: null,
-                  assetPath: 'assets/musicicon.png',
-                  label1: '평가한',
-                  label2: '음악',
-                  count: _ratedSongs.length,
-                  textColor: Colors.black,
-                ),
-              ],
-            ),
-          ),
         ],
       ),
       ),
       bottomNavigationBar: const BottomNavBar(currentIndex: 0),
     );
   }
-
-  Widget buildStatBoxWidget({
-    IconData? icon,
-    String? assetPath,
-    required String label1,
-    required String label2,
-    required int count,
-    required Color textColor,
-  }) {
-    return Container(
-      width: 120,
-      height: 65,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF2DB),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          if (assetPath != null)
-            Image.asset(
-              assetPath,
-              width: 25,
-              height: 25,
-              fit: BoxFit.contain,
-            )
-          else if (icon != null)
-            Icon(
-              icon,
-              color: Colors.red,
-              size: 25,
-            ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Text(
-              '$label1\n$label2 $count개',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-                height: 1.2,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
-

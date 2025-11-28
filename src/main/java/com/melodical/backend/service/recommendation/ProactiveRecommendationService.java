@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -31,6 +32,7 @@ public class ProactiveRecommendationService {
     private final Stage1CandidateService stage1Service;
     private final Stage2PCTRRankingService stage2Service;
     private final Stage3TwiddlerService stage3Service;
+    private final RatingBasedSimilarityService ratingBasedSimilarityService;
 
     private static final int DEFAULT_CANDIDATE_COUNT = 300;
     
@@ -105,9 +107,12 @@ public class ProactiveRecommendationService {
             List<CandidateItem> rankedCandidates = stage2Service.rankCandidatesByPCTR(
                     user, candidates, mockRequest);
             
+            // 사용자가 평가한 작품 목록 가져오기
+            Set<String> userRatedMusicals = ratingBasedSimilarityService.getUserRatedMusicalIds(userId);
+            
             // Stage-3: Twiddler 후처리
             List<CandidateItem> finalCandidates = stage3Service.applyTwiddlerPolicies(
-                    user, rankedCandidates, mockRequest);
+                    user, rankedCandidates, mockRequest, userRatedMusicals);
             
             // 캐시에 저장 (30분 TTL)
             cacheService.cacheRecommendations(userId, surface, finalCandidates);
@@ -126,7 +131,11 @@ public class ProactiveRecommendationService {
     public void refreshRecommendations(Long userId) {
         log.info("🔄 Refreshing recommendations for user: {}", userId);
         
-        // 새 추천 생성 (자동으로 캐시 업데이트됨)
+        // 1. 캐시 무효화
+        cacheService.invalidateCache(userId);
+        log.info("🗑️ Cache invalidated for user: {}", userId);
+        
+        // 2. 새 추천 생성 (자동으로 캐시 업데이트됨)
         generateRecommendationsForUser(userId, "home");
         
         log.info("✅ Recommendations refreshed for user: {}", userId);

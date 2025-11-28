@@ -171,5 +171,33 @@ public class CrawlerController {
             return ResponseEntity.internalServerError().body(response);
         }
     }
+
+    /**
+     * 크롤링 데이터를 Musical 엔티티로 동기화
+     */
+    @PostMapping("/sync")
+    public ResponseEntity<Map<String, Object>> syncCrawledDataToMusicals() {
+        log.info("🔄 Manual sync requested");
+
+        try {
+            int syncCount = musicalSyncService.syncCrawledDataToMusicals();
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "success");
+            response.put("message", "Synced crawled data to Musical entities");
+            response.put("syncCount", syncCount);
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("❌ Failed to sync data", e);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("status", "error");
+            response.put("message", e.getMessage());
+            response.put("syncCount", 0);
+
+            return ResponseEntity.internalServerError().body(response);
+        }
+    }
 }
 

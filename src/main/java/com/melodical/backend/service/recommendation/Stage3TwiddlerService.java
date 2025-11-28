@@ -27,6 +27,7 @@ public class Stage3TwiddlerService {
 
     private final ExposureLogRepository exposureLogRepository;
     private final RedisTemplate<String, Object> redisTemplate;
+    private final com.melodical.backend.repository.MusicalRepository musicalRepository;
 
     // 조정 가중치
     private static final double SEEN_PENALTY_WEIGHT = 0.3;
@@ -40,9 +41,10 @@ public class Stage3TwiddlerService {
 
     /**
      * 후처리를 통한 최종 추천 목록 생성
+     * ✨ 소스별 쿼터 보장: 뮤지컬 취향 7개, 음악 취향 5개, 인기차트 5개
      */
     public List<CandidateItem> applyTwiddlerPolicies(User user, List<CandidateItem> rankedCandidates,
-                                                    RecommendationRequest request) {
+                                                    RecommendationRequest request, Set<String> userRatedMusicals) {
         log.info("Applying Twiddler policies for user: {}, candidates: {}",
                 user.getId(), rankedCandidates.size());
 
@@ -64,14 +66,141 @@ public class Stage3TwiddlerService {
         // 6) 결정적 출력을 위한 안정적 정렬
         finalCandidates = applyStableSorting(finalCandidates);
 
-        // 7) 요청된 개수만큼 반환
+        // ✨ 7) 소스별 쿼터 보장 (뮤지컬 취향 7개, 음악 취향 5개, 인기차트 5개)
+        finalCandidates = applySourceQuotaGuarantee(finalCandidates, userRatedMusicals);
+
+        // 8) 요청된 개수만큼 반환
         int requestedCount = request.getCount();
         List<CandidateItem> result = finalCandidates.stream()
                 .limit(requestedCount)
                 .collect(Collectors.toList());
 
         log.info("Applied Twiddler policies, returning {} candidates", result.size());
+        log.info("  Source breakdown - Combined: {}, Music-only: {}, Popularity-only: {}",
+                result.stream().filter(c -> "combined_algorithm".equals(c.getSource())).count(),
+                result.stream().filter(c -> "music_taste_only".equals(c.getSource())).count(),
+                result.stream().filter(c -> "popularity_only".equals(c.getSource())).count());
+        
         return result;
+    }
+
+    /**
+     * ✨ 소스별 쿼터 보장
+     * - combined_algorithm: 최대 7개 보장
+     * - music_taste_only: 최대 5개 보장
+     * - popularity_only: 최대 5개 보장
+     * 총 17개 후보가 있으면 모두 포함되도록 함
+     * ✅ 사용자가 평가한 작품은 제외
+     */
+    private List<CandidateItem> applySourceQuotaGuarantee(List<CandidateItem> candidates, Set<String> userRatedMusicals) {
+        // 소스별로 분류
+        List<CandidateItem> combinedAlgorithm = candidates.stream()
+                .filter(c -> "combined_algorithm".equals(c.getSource()))
+                .collect(Collectors.toList());
+        
+        List<CandidateItem> musicTasteOnly = candidates.stream()
+                .filter(c -> "music_taste_only".equals(c.getSource()))
+                .collect(Collectors.toList());
+        
+        List<CandidateItem> popularityOnly = candidates.stream()
+                .filter(c -> "popularity_only".equals(c.getSource()))
+                .collect(Collectors.toList());
+        
+        log.info("📊 Source distribution before quota guarantee:");
+        log.info("  - Combined algorithm: {} candidates", combinedAlgorithm.size());
+        log.info("  - Music taste only: {} candidates", musicTasteOnly.size());
+        log.info("  - Popularity only: {} candidates", popularityOnly.size());
+        
+        // 쿼터 보장을 위한 최종 리스트
+        List<CandidateItem> result = new ArrayList<>();
+        
+        // 1) Combined algorithm 최대 7개
+        result.addAll(combinedAlgorithm.stream().limit(7).collect(Collectors.toList()));
+        
+        // 2) Music taste only 최대 5개
+        result.addAll(musicTasteOnly.stream().limit(5).collect(Collectors.toList()));
+        
+        // 3) Popularity only 최대 5개
+        result.addAll(popularityOnly.stream().limit(5).collect(Collectors.toList()));
+
+        // If popularity candidates are insufficient, supplement from musicalRepository
+        int POPULARITY_REQUIRED = 5;
+        long currentPopularityCount = result.stream().filter(c -> "popularity_only".equals(c.getSource())).count();
+        if (currentPopularityCount < POPULARITY_REQUIRED) {
+            int need = POPULARITY_REQUIRED - (int) currentPopularityCount;
+            log.info("⚠️ Popularity quota not met. Need {} more candidates. Excluding {} user-rated musicals.",
+                    need, userRatedMusicals.size());
+            try {
+                // Fetch top musicals by popularityScore and add missing ones
+                List<com.melodical.backend.entity.Musical> topByPopularity = musicalRepository.findAll().stream()
+                        .sorted((a, b) -> Double.compare(
+                                b.getPopularityScore() != null ? b.getPopularityScore() : 0.0,
+                                a.getPopularityScore() != null ? a.getPopularityScore() : 0.0))
+                        .collect(Collectors.toList());
+
+                for (com.melodical.backend.entity.Musical m : topByPopularity) {
+                    if (need <= 0) break;
+                    
+                    // ✅ 사용자가 평가한 작품 제외
+                    if (userRatedMusicals != null && m.getInterparkId() != null && 
+                        userRatedMusicals.contains(m.getInterparkId())) {
+                        log.debug("  Skipping user-rated musical: {} (ID: {}, Interpark: {})", 
+                                m.getTitle(), m.getId(), m.getInterparkId());
+                        continue;
+                    }
+                    
+                    // 이미 결과에 포함된 작품 제외
+                    boolean alreadyPresent = result.stream().anyMatch(c -> c.getMusicalId().equals(m.getId()));
+                    if (alreadyPresent) continue;
+
+                    CandidateItem candidate = CandidateItem.builder()
+                            .musicalId(m.getId())
+                            .title(m.getTitle())
+                            .contentCrossScore(0.0)
+                            .cfCrossScore(0.0)
+                            .sideScore(m.getPopularityScore() != null ? m.getPopularityScore() : 0.0)
+                            .stage1Score(m.getPopularityScore() != null ? m.getPopularityScore() : 0.0)
+                            .genre(m.getGenre())
+                            .region(m.getRegion())
+                            .isOnSale(m.getIsOnSale())
+                            .isNew(m.getIsNew())
+                            .popularityScore(m.getPopularityScore())
+                            .source("popularity_only")
+                            .musicCfScore(0.0)
+                            .musicalCfScore(0.0)
+                            .pctrScore(m.getPopularityScore() != null ? m.getPopularityScore() : 0.0)
+                            .finalScore(m.getPopularityScore() != null ? m.getPopularityScore() : 0.0)
+                            .build();
+
+                    result.add(candidate);
+                    need--;
+                    log.info("  ✅ Added supplemental popularity candidate: {} (ID: {})", 
+                            m.getTitle(), m.getId());
+                }
+            } catch (Exception e) {
+                log.warn("Failed to supplement popularity candidates from repository", e);
+            }
+        }
+        
+        log.info("✅ Source distribution after quota guarantee:");
+        log.info("  - Combined algorithm: {} candidates", 
+                result.stream().filter(c -> "combined_algorithm".equals(c.getSource())).count());
+        log.info("  - Music taste only: {} candidates", 
+                result.stream().filter(c -> "music_taste_only".equals(c.getSource())).count());
+        log.info("  - Popularity only: {} candidates", 
+                result.stream().filter(c -> "popularity_only".equals(c.getSource())).count());
+        log.info("  - Total: {} candidates", result.size());
+        
+        // 점수 순으로 재정렬 (소스별 쿼터는 보장하되, 전체적으로는 점수순 유지)
+        return result.stream()
+                .sorted((a, b) -> {
+                    int scoreCompare = Double.compare(b.getFinalScore(), a.getFinalScore());
+                    if (scoreCompare == 0) {
+                        return Long.compare(a.getMusicalId(), b.getMusicalId());
+                    }
+                    return scoreCompare;
+                })
+                .collect(Collectors.toList());
     }
 
     /**

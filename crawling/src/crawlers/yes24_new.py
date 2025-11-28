@@ -133,10 +133,32 @@ class Yes24Crawler(BaseCrawler):
                 # 평점 추출
                 rating = self._extract_rating(detail_soup)
                 
-                # 이미지 추출
-                img_elem = detail_soup.select_one('img[alt*="포스터"], .poster img, [class*="poster"] img')
-                image_url = img_elem.get('src') if img_elem else None
-                if image_url and not image_url.startswith('http'):
+                # 이미지 추출 - 다양한 케이스 대비 (data-src, og:image, background-image 등)
+                image_url = None
+
+                # 1) meta og:image
+                og = detail_soup.select_one('meta[property="og:image"]')
+                if og and og.get('content'):
+                    image_url = og.get('content')
+
+                # 2) 표준 img 태그 (src, data-src)
+                if not image_url:
+                    img_elem = detail_soup.select_one('img[alt*="포스터"], .poster img, [class*="poster"] img, img[class*="thumb"], img[data-src]')
+                    if img_elem:
+                        image_url = img_elem.get('src') or img_elem.get('data-src') or img_elem.get('data-lazy-src')
+
+                # 3) div style background-image
+                if not image_url:
+                    div_elem = detail_soup.select_one('[style*="background-image"], .poster, .thumb')
+                    if div_elem and div_elem.get('style'):
+                        m = re.search(r'url\(["\']?(.*?)["\']?\)', div_elem.get('style'))
+                        if m:
+                            image_url = m.group(1)
+
+                # 4) 절대/상대 경로 보정
+                if image_url and image_url.startswith('//'):
+                    image_url = 'https:' + image_url
+                elif image_url and not image_url.startswith('http'):
                     image_url = self.base_url + image_url
                 
                 musical_info = {

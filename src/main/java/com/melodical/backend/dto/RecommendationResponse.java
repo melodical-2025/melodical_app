@@ -37,6 +37,7 @@ public class RecommendationResponse {
     private String recommendationReason;  // 주요 추천 이유 (단일 문자열)
     private Double similarityPercentage;  // 유사도 퍼센트 (0-100)
     private Integer chartRanking;          // 인기차트 순위 (있는 경우)
+    private String source;                 // 추천 소스 (combined, music_only, musical_only, popularity_only)
 
     // Integrated 데이터 추가 필드 (평점 및 URL)
     private Double averageRating;    // 평균 평점

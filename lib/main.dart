@@ -23,7 +23,11 @@ import 'screens/nickname_setting_screen.dart';  // 닉네임 설정 화면 추�
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Kakao SDK 초기화
   KakaoSdk.init(nativeAppKey: 'f44e738db2fe6cbe4d9e6ec86bd0b8d2');
+  
+  // Naver SDK는 별도 초기화 불필요 (네이티브 설정에서 처리)
+  // 하지만 URL Scheme과 AndroidManifest 설정이 필요함
 
   runApp(
     ChangeNotifierProvider(

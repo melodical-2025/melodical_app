@@ -50,9 +50,18 @@ public class SocialAuthService {
             JsonNode jsonNode = objectMapper.readTree(payload);
 
             // 사용자 정보 추출
-            String email = jsonNode.get("email").asText();
-            String name = jsonNode.has("name") ? jsonNode.get("name").asText() : email.split("@")[0];
-            String googleId = jsonNode.get("sub").asText();
+            String email = jsonNode.has("email") ? jsonNode.get("email").asText() : null;
+            String name = jsonNode.has("name") ? jsonNode.get("name").asText() : null;
+            String googleId = jsonNode.has("sub") ? jsonNode.get("sub").asText() : null;
+
+            if (email == null || googleId == null) {
+                log.error("Google token missing required fields. Available fields: {}", jsonNode.fieldNames());
+                throw new IllegalArgumentException("Invalid Google ID Token: missing email or sub");
+            }
+
+            if (name == null || name.isEmpty()) {
+                name = email.split("@")[0];
+            }
 
             log.info("Google login attempt - email: {}, googleId: {}", email, googleId);
 
@@ -69,8 +78,11 @@ public class SocialAuthService {
                     .nickname(user.getNickname())
                     .build();
 
+        } catch (IllegalArgumentException e) {
+            log.error("Google authentication failed: {}", e.getMessage());
+            throw new RuntimeException("Google 인증 실패: " + e.getMessage());
         } catch (Exception e) {
-            log.error("Google authentication failed", e);
+            log.error("Google authentication failed with unexpected error", e);
             throw new RuntimeException("Google 인증 실패: " + e.getMessage());
         }
     }
@@ -124,7 +136,7 @@ public class SocialAuthService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Kakao authentication failed", e);
+            log.error("Kakao authentication failed: {}. Token: {}", e.getMessage(), accessToken != null ? "present" : "missing", e);
             throw new RuntimeException("Kakao 인증 실패: " + e.getMessage());
         }
     }
@@ -188,8 +200,66 @@ public class SocialAuthService {
                     .build();
 
         } catch (Exception e) {
-            log.error("Naver authentication failed", e);
+            log.error("Naver authentication failed: {}. Token: {}", e.getMessage(), accessToken != null ? "present" : "missing", e);
             throw new RuntimeException("Naver 인증 실패: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Apple Identity Token 검증 및 사용자 생성/로그인
+     * @param identityToken Apple Identity Token
+     * @return JWT 토큰이 포함된 인증 응답
+     */
+    @Transactional
+    public AuthResponse authenticateWithApple(String identityToken) {
+        try {
+            // Apple Identity Token에서 페이로드 추출 (JWT 형식)
+            String[] parts = identityToken.split("\\.");
+            if (parts.length != 3) {
+                throw new IllegalArgumentException("Invalid Apple Identity Token format");
+            }
+
+            // Base64 디코딩
+            String payload = new String(Base64.getUrlDecoder().decode(parts[1]));
+            JsonNode jsonNode = objectMapper.readTree(payload);
+
+            // 사용자 정보 추출
+            String appleId = jsonNode.has("sub") ? jsonNode.get("sub").asText() : null;
+            String email = jsonNode.has("email") ? jsonNode.get("email").asText() : null;
+
+            if (appleId == null) {
+                log.error("Apple token missing required field 'sub'. Available fields: {}", jsonNode.fieldNames());
+                throw new IllegalArgumentException("Invalid Apple Identity Token: missing sub");
+            }
+
+            // 이메일이 없으면 appleId로 임시 이메일 생성
+            if (email == null || email.isEmpty()) {
+                email = "apple_" + appleId + "@melodical.temp";
+            }
+
+            String name = "Apple_" + appleId.substring(0, Math.min(8, appleId.length()));
+
+            log.info("Apple login attempt - email: {}, appleId: {}", email, appleId);
+
+            // 사용자 조회 또는 생성
+            User user = findOrCreateUser(email, name, "APPLE", appleId);
+
+            // JWT 토큰 생성
+            String jwtToken = jwtService.generateToken(user.getEmail(), user.getId());
+
+            return AuthResponse.builder()
+                    .token(jwtToken)
+                    .userId(user.getId())
+                    .email(user.getEmail())
+                    .nickname(user.getNickname())
+                    .build();
+
+        } catch (IllegalArgumentException e) {
+            log.error("Apple authentication failed: {}", e.getMessage());
+            throw new RuntimeException("Apple 인증 실패: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Apple authentication failed with unexpected error. Token: {}", identityToken != null ? "present" : "missing", e);
+            throw new RuntimeException("Apple 인증 실패: " + e.getMessage());
         }
     }
 
@@ -221,6 +291,7 @@ public class SocialAuthService {
                 .provider(provider)
                 .providerId(providerId)
                 .password(null)  // 소셜 로그인은 비밀번호 없음
+                .role("USER")    // 기본 역할 설정
                 .build();
 
         User savedUser = userRepository.save(newUser);

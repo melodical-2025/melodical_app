@@ -60,65 +60,155 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _loginWithGoogle() async {
     setState(() => _isLoading = true);
     try {
+      print('[Google Login] Starting Google Sign-In...');
       final googleUser = await GoogleSignIn(scopes: ['email']).signIn();
-      if (googleUser == null) throw '취소됨';
+      if (googleUser == null) {
+        print('[Google Login] User cancelled');
+        throw '취소됨';
+      }
+      
+      print('[Google Login] Getting authentication...');
       final auth = await googleUser.authentication;
+      
+      if (auth.idToken == null) {
+        print('[Google Login] ID Token is null');
+        throw 'Google ID Token을 가져올 수 없습니다';
+      }
+      
+      print('[Google Login] Sending to backend...');
       final resp = await ApiService.loginWithGoogle(auth.idToken!);
+      print('[Google Login] Backend response: ${resp.statusCode}');
+      
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
+        print('[Google Login] Success! Token received');
         await TokenStorage().saveToken(data['token']);
+        if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/home');
       } else {
-        throw 'Google 로그인 실패 (${resp.statusCode})';
+        // 백엔드 에러 메시지 표시
+        String errorMsg = 'Google 로그인 실패 (${resp.statusCode})';
+        try {
+          final errorData = jsonDecode(resp.body);
+          if (errorData['message'] != null) {
+            errorMsg = errorData['message'];
+          }
+          print('[Google Login] Error: $errorMsg');
+        } catch (e) {
+          print('[Google Login] Failed to parse error: $e');
+        }
+        throw errorMsg;
       }
     } catch (e) {
-      _showSnack(e.toString());
+      print('[Google Login] Exception: $e');
+      if (mounted) {
+        _showSnack(e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-    setState(() => _isLoading = false);
   }
 
   Future<void> _loginWithKakao() async {
     setState(() => _isLoading = true);
     try {
-      OAuthToken token = await (await isKakaoTalkInstalled()
+      print('[Kakao Login] Starting Kakao Sign-In...');
+      final bool isInstalled = await isKakaoTalkInstalled();
+      print('[Kakao Login] KakaoTalk installed: $isInstalled');
+      
+      OAuthToken token = await (isInstalled
           ? UserApi.instance.loginWithKakaoTalk()
           : UserApi.instance.loginWithKakaoAccount());
+      
+      print('[Kakao Login] Got access token');
       final resp = await ApiService.loginWithKakao(token.accessToken);
+      print('[Kakao Login] Backend response: ${resp.statusCode}');
+      
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
+        print('[Kakao Login] Success! Token received');
         await TokenStorage().saveToken(data['token']);
+        if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/home');
       } else {
-        throw '카카오 로그인 실패 (${resp.statusCode})';
+        // 백엔드 에러 메시지 표시
+        String errorMsg = '카카오 로그인 실패 (${resp.statusCode})';
+        try {
+          final errorData = jsonDecode(resp.body);
+          if (errorData['message'] != null) {
+            errorMsg = errorData['message'];
+          }
+          print('[Kakao Login] Error: $errorMsg');
+        } catch (e) {
+          print('[Kakao Login] Failed to parse error: $e');
+        }
+        throw errorMsg;
       }
     } catch (e) {
-      _showSnack(e.toString());
+      print('[Kakao Login] Exception: $e');
+      if (mounted) {
+        _showSnack(e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-    setState(() => _isLoading = false);
   }
 
   Future<void> _loginWithNaver() async {
     setState(() => _isLoading = true);
     try {
+      print('[Naver Login] Starting Naver Sign-In...');
       final res = await FlutterNaverLogin.logIn();
+      print('[Naver Login] Login status: ${res.status}');
+      
       if (res.status != NaverLoginStatus.loggedIn) {
+        print('[Naver Login] Login cancelled or failed');
         throw '네이버 로그인 취소/실패';
       }
+      
       if (res.accessToken?.accessToken == null) {
+        print('[Naver Login] Access token is null');
         throw '네이버 액세스 토큰을 가져올 수 없습니다';
       }
+      
+      print('[Naver Login] Sending to backend...');
       final resp = await ApiService.loginWithNaver(res.accessToken!.accessToken);
+      print('[Naver Login] Backend response: ${resp.statusCode}');
+      
       if (resp.statusCode == 200) {
         final data = jsonDecode(resp.body);
+        print('[Naver Login] Success! Token received');
         await TokenStorage().saveToken(data['token']);
+        if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/home');
       } else {
-        throw '네이버 로그인 실패 (${resp.statusCode})';
+        // 백엔드 에러 메시지 표시
+        String errorMsg = '네이버 로그인 실패 (${resp.statusCode})';
+        try {
+          final errorData = jsonDecode(resp.body);
+          if (errorData['message'] != null) {
+            errorMsg = errorData['message'];
+          }
+          print('[Naver Login] Error: $errorMsg');
+        } catch (e) {
+          print('[Naver Login] Failed to parse error: $e');
+        }
+        throw errorMsg;
       }
     } catch (e) {
-      _showSnack(e.toString());
+      print('[Naver Login] Exception: $e');
+      if (mounted) {
+        _showSnack(e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
-    setState(() => _isLoading = false);
   }
 
   void _showSnack(String msg) {

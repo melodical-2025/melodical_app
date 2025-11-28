@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Melodical</string>
+    
+    <!-- Naver Login Client ID -->
+    <!-- ⚠️ 네이버 개발자 센터에서 발급받은 실제 Client ID로 변경 필요 -->
+    <!-- https://developers.naver.com/apps/#/register -->
+    <!-- 애플리케이션 등록 후 클라이언트 ID를 여기에 입력 -->
+    <string name="naver_client_id">YOUR_NAVER_CLIENT_ID</string>
+    <string name="naver_client_secret">YOUR_NAVER_CLIENT_SECRET</string>
+    <string name="naver_client_name">Melodical</string>
+</resources>

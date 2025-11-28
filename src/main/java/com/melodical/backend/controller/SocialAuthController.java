@@ -29,11 +29,16 @@ public class SocialAuthController {
      * @return JWT 토큰 및 사용자 정보
      */
     @PostMapping("/google")
-    public ResponseEntity<AuthResponse> googleLogin(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> googleLogin(@RequestBody Map<String, String> body) {
         try {
-            String idToken = body.get("token");
+            // Flutter에서 'idToken' 또는 'token' 키로 보낼 수 있음
+            String idToken = body.get("idToken");
+            if (idToken == null || idToken.isEmpty()) {
+                idToken = body.get("token");
+            }
             
             if (idToken == null || idToken.isEmpty()) {
+                log.error("Google login failed: Missing token. Body keys: {}", body.keySet());
                 return ResponseEntity.badRequest().build();
             }
 
@@ -44,7 +49,9 @@ public class SocialAuthController {
             
         } catch (Exception e) {
             log.error("Google login failed", e);
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", "Google login failed", 
+                                "message", e.getMessage()));
         }
     }
 
@@ -56,7 +63,7 @@ public class SocialAuthController {
      * @return JWT 토큰 및 사용자 정보
      */
     @PostMapping("/kakao")
-    public ResponseEntity<AuthResponse> kakaoLogin(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> kakaoLogin(@RequestBody Map<String, String> body) {
         try {
             String accessToken = body.get("accessToken");
             
@@ -76,7 +83,9 @@ public class SocialAuthController {
             
         } catch (Exception e) {
             log.error("Kakao login failed", e);
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", "Kakao login failed", 
+                                "message", e.getMessage()));
         }
     }
 
@@ -88,7 +97,7 @@ public class SocialAuthController {
      * @return JWT 토큰 및 사용자 정보
      */
     @PostMapping("/naver")
-    public ResponseEntity<AuthResponse> naverLogin(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> naverLogin(@RequestBody Map<String, String> body) {
         try {
             String accessToken = body.get("accessToken");
             
@@ -108,7 +117,44 @@ public class SocialAuthController {
             
         } catch (Exception e) {
             log.error("Naver login failed", e);
-            return ResponseEntity.status(401).build();
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", "Naver login failed", 
+                                "message", e.getMessage()));
+        }
+    }
+
+    /**
+     * Apple 로그인
+     * Flutter에서 Apple Sign-In으로 받은 Identity Token을 검증하고 JWT 발급
+     * 
+     * @param body { "identityToken": "Apple Identity Token", "authorizationCode": "..." }
+     * @return JWT 토큰 및 사용자 정보
+     */
+    @PostMapping("/apple")
+    public ResponseEntity<?> appleLogin(@RequestBody Map<String, String> body) {
+        try {
+            String identityToken = body.get("identityToken");
+            
+            // Flutter에서 'token' 키로 보낼 수도 있으므로 둘 다 체크
+            if (identityToken == null || identityToken.isEmpty()) {
+                identityToken = body.get("token");
+            }
+            
+            if (identityToken == null || identityToken.isEmpty()) {
+                log.error("Apple login failed: Missing token. Body keys: {}", body.keySet());
+                return ResponseEntity.badRequest().build();
+            }
+
+            log.info("Apple login request received");
+            AuthResponse response = socialAuthService.authenticateWithApple(identityToken);
+            
+            return ResponseEntity.ok(response);
+            
+        } catch (Exception e) {
+            log.error("Apple login failed", e);
+            return ResponseEntity.status(401)
+                    .body(Map.of("error", "Apple login failed", 
+                                "message", e.getMessage()));
         }
     }
 }

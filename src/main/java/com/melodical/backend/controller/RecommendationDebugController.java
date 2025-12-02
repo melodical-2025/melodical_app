@@ -243,16 +243,20 @@ public class RecommendationDebugController {
         try {
             log.info("🎵 Getting music taste recommendations for userId={}", userId);
             
-            // 추천 생성
+            // 추천 생성 - 충분한 수를 가져오기 위해
             RecommendationRequest request = RecommendationRequest.builder()
                     .userId(userId)
-                    .count(count)
+                    .count(Math.max(count * 2, 50))
                     .build();
             List<RecommendationResponse> allRecommendations = recommendationService.recommend(request);
             
-            // 음악 취향 기반만 필터링
+            // 음악 취향 기반만 필터링 및 finalScore 기준 내림차순 정렬
             List<RecommendationResponse> musicTasteRecommendations = allRecommendations.stream()
                     .filter(rec -> "music_taste_only".equals(rec.getSource()))
+                    .sorted((a, b) -> Double.compare(
+                            b.getFinalScore() != null ? b.getFinalScore() : 0.0,
+                            a.getFinalScore() != null ? a.getFinalScore() : 0.0
+                    ))
                     .limit(count)
                     .collect(Collectors.toList());
             
@@ -292,16 +296,20 @@ public class RecommendationDebugController {
         try {
             log.info("🎭 Getting musical taste recommendations for userId={}", userId);
             
-            // 추천 생성
+            // 추천 생성 - 충분한 수를 가져오기 위해
             RecommendationRequest request = RecommendationRequest.builder()
                     .userId(userId)
-                    .count(count)
+                    .count(Math.max(count * 2, 50))
                     .build();
             List<RecommendationResponse> allRecommendations = recommendationService.recommend(request);
             
-            // 뮤지컬 취향 기반만 필터링 (combined_algorithm만 사용)
+            // 뮤지컬 취향 기반만 필터링 (combined_algorithm만 사용) 및 finalScore 기준 내림차순 정렬
             List<RecommendationResponse> musicalTasteRecommendations = allRecommendations.stream()
                     .filter(rec -> "combined_algorithm".equals(rec.getSource()))
+                    .sorted((a, b) -> Double.compare(
+                            b.getFinalScore() != null ? b.getFinalScore() : 0.0,
+                            a.getFinalScore() != null ? a.getFinalScore() : 0.0
+                    ))
                     .limit(count)
                     .collect(Collectors.toList());
             
@@ -341,16 +349,20 @@ public class RecommendationDebugController {
         try {
             log.info("⭐ Getting popularity chart recommendations for userId={}", userId);
             
-            // 추천 생성
+            // 추천 생성 - 충분한 수를 가져오기 위해
             RecommendationRequest request = RecommendationRequest.builder()
                     .userId(userId)
-                    .count(count)
+                    .count(Math.max(count * 2, 50))
                     .build();
             List<RecommendationResponse> allRecommendations = recommendationService.recommend(request);
             
-            // 인기차트 기반만 필터링
+            // 인기차트 기반만 필터링 및 finalScore 기준 내림차순 정렬
             List<RecommendationResponse> popularityRecommendations = allRecommendations.stream()
                     .filter(rec -> "popularity_only".equals(rec.getSource()))
+                    .sorted((a, b) -> Double.compare(
+                            b.getFinalScore() != null ? b.getFinalScore() : 0.0,
+                            a.getFinalScore() != null ? a.getFinalScore() : 0.0
+                    ))
                     .limit(count)
                     .collect(Collectors.toList());
             
@@ -390,26 +402,38 @@ public class RecommendationDebugController {
         try {
             log.info("📊 Getting all stage recommendations for userId={}", userId);
             
-            // 추천 생성
+            // 추천 생성 - 충분한 수를 가져오기 위해 100개로 설정
             RecommendationRequest request = RecommendationRequest.builder()
                     .userId(userId)
-                    .count(count * 3) // 각 단계별로 충분한 수를 가져오기 위해
+                    .count(100)
                     .build();
             List<RecommendationResponse> allRecommendations = recommendationService.recommend(request);
             
-            // 각 단계별로 분류
+            // 각 단계별로 분류 및 finalScore 기준 내림차순 정렬
             List<RecommendationResponse> musicTaste = allRecommendations.stream()
                     .filter(rec -> "music_taste_only".equals(rec.getSource()))
+                    .sorted((a, b) -> Double.compare(
+                            b.getFinalScore() != null ? b.getFinalScore() : 0.0,
+                            a.getFinalScore() != null ? a.getFinalScore() : 0.0
+                    ))
                     .limit(count)
                     .collect(Collectors.toList());
             
             List<RecommendationResponse> musicalTaste = allRecommendations.stream()
                     .filter(rec -> "combined_algorithm".equals(rec.getSource()))
+                    .sorted((a, b) -> Double.compare(
+                            b.getFinalScore() != null ? b.getFinalScore() : 0.0,
+                            a.getFinalScore() != null ? a.getFinalScore() : 0.0
+                    ))
                     .limit(count)
                     .collect(Collectors.toList());
             
             List<RecommendationResponse> popularity = allRecommendations.stream()
                     .filter(rec -> "popularity_only".equals(rec.getSource()))
+                    .sorted((a, b) -> Double.compare(
+                            b.getFinalScore() != null ? b.getFinalScore() : 0.0,
+                            a.getFinalScore() != null ? a.getFinalScore() : 0.0
+                    ))
                     .limit(count)
                     .collect(Collectors.toList());
             

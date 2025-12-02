@@ -1,4 +1,7 @@
-.md
+# Markdown files (except README.md)
+*.md
+!README.md
+
 .gradle
 build/
 !gradle/wrapper/gradle-wrapper.jar
@@ -38,6 +41,18 @@ out/
 
 # macOS 메타파일
 .DS_Store
+
+# Logs and exports
+logs/
+recommendation_exports/
+*.log
+dump.rdb
+
+# Screenshots
+*.png
+
+# CSV data files
+*.csv
 
 # Flutter/Android 환경별 파일
 /.dart_tool/

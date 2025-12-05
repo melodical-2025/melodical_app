@@ -373,12 +373,20 @@ class _BoardScreenState extends State<BoardScreen> {
                     child: CircleAvatar(
                       radius: 20,
                       backgroundColor: Colors.grey[300],
-                      backgroundImage: comment.profileImageUrl != null && comment.profileImageUrl!.isNotEmpty
-                          ? NetworkImage('${ApiConfig.baseUrl}${comment.profileImageUrl}')
-                          : null,
-                      child: comment.profileImageUrl == null || comment.profileImageUrl!.isEmpty
-                          ? const Icon(Icons.person, size: 16, color: Color(0xFFE17951))
-                          : null,
+                      child: comment.profileImageUrl != null && comment.profileImageUrl!.isNotEmpty
+                          ? ClipOval(
+                              child: Image.network(
+                                '${ApiConfig.baseUrl}${comment.profileImageUrl}',
+                                width: 40,
+                                height: 40,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  print('❌ 이미지 로드 실패: ${ApiConfig.baseUrl}${comment.profileImageUrl}');
+                                  return const Icon(Icons.person, size: 16, color: Color(0xFFE17951));
+                                },
+                              ),
+                            )
+                          : const Icon(Icons.person, size: 16, color: Color(0xFFE17951)),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -530,12 +538,20 @@ class _BoardScreenState extends State<BoardScreen> {
               CircleAvatar(
                 radius: 50,
                 backgroundColor: const Color(0xFFFFD9A3),
-                backgroundImage: userStats['profileImageUrl'] != null && userStats['profileImageUrl'].isNotEmpty
-                    ? NetworkImage('${ApiConfig.baseUrl}${userStats['profileImageUrl']}')
-                    : null,
-                child: userStats['profileImageUrl'] == null || userStats['profileImageUrl'].isEmpty
-                    ? const Icon(Icons.person, size: 40, color: Color(0xFFE17951))
-                    : null,
+                child: userStats['profileImageUrl'] != null && userStats['profileImageUrl'].isNotEmpty
+                    ? ClipOval(
+                        child: Image.network(
+                          '${ApiConfig.baseUrl}${userStats['profileImageUrl']}',
+                          width: 100,
+                          height: 100,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('❌ 사용자 프로필 이미지 로드 실패: ${ApiConfig.baseUrl}${userStats['profileImageUrl']}');
+                            return const Icon(Icons.person, size: 40, color: Color(0xFFE17951));
+                          },
+                        ),
+                      )
+                    : const Icon(Icons.person, size: 40, color: Color(0xFFE17951)),
               ),
               const SizedBox(height: 16),
               Text(

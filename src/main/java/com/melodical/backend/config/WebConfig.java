@@ -43,6 +43,8 @@ public class WebConfig implements WebMvcConfigurer {
         String absolutePath = uploadPath.toURI().toString();
         
         registry.addResourceHandler("/uploads/profile-images/**")
-                .addResourceLocations(absolutePath);
+                .addResourceLocations(absolutePath)
+                .setCachePeriod(0) // 캐시 비활성화 (개발 중)
+                .resourceChain(false);
     }
 }

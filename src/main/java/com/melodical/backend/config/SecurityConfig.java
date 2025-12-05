@@ -34,6 +34,7 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/auth/**", "/oauth2/**", "/api/token/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll() // 정적 리소스 허용
+                        .requestMatchers(HttpMethod.GET, "/api/users/{userId}", "/api/users/{userId}/stats").permitAll() // 사용자 프로필 조회 허용
                         .requestMatchers(HttpMethod.GET,"/api/musicals/fetch", "/api/musicals/rated").permitAll()
                         .requestMatchers("/api/recommendations/**").permitAll()
                         .requestMatchers("/api/app/**").permitAll()

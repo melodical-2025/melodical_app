@@ -275,12 +275,20 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
             CircleAvatar(
               radius: 36,
               backgroundColor: const Color(0xFFFFD9A3),
-              backgroundImage: _profileImageUrl != null && _profileImageUrl!.isNotEmpty
-                  ? NetworkImage('${ApiConfig.baseUrl}$_profileImageUrl')
-                  : null,
-              child: _profileImageUrl == null || _profileImageUrl!.isEmpty
-                  ? const Icon(Icons.music_note, color: primary, size: 28)
-                  : null,
+              child: _profileImageUrl != null && _profileImageUrl!.isNotEmpty
+                  ? ClipOval(
+                      child: Image.network(
+                        '${ApiConfig.baseUrl}$_profileImageUrl',
+                        width: 72,
+                        height: 72,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          print('❌ 프로필 이미지 로드 실패: ${ApiConfig.baseUrl}$_profileImageUrl');
+                          return const Icon(Icons.music_note, color: primary, size: 28);
+                        },
+                      ),
+                    )
+                  : const Icon(Icons.music_note, color: primary, size: 28),
             ),
             Positioned(
               right: 0,

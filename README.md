@@ -173,7 +173,7 @@ flutter run -d ios
 
 - 로그인 & 회원가입 화면
   
-  <img width="1080" height="2424" alt="Screenshot_20251205_115720" src="https://github.com/user-attachments/assets/36aa747c-5221-4659-877c-c4ac01b702d8" />
+  <img width="360" alt="Screenshot_20251205_115720" src="https://github.com/user-attachments/assets/36aa747c-5221-4659-877c-c4ac01b702d8" />
 
 - 뮤지컬 선택 화면
 

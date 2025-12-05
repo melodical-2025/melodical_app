@@ -189,7 +189,7 @@ flutter run -d ios
 
 - 뮤지컬 작품 상세 화면
   
-<img width="360" alt="Screenshot_20251205_120116" src="https://github.com/user-attachments/assets/52d86c5e-30a0-4983-a50b-9e3c17331c52" />
+  <img width="360" alt="Screenshot_20251205_120116" src="https://github.com/user-attachments/assets/52d86c5e-30a0-4983-a50b-9e3c17331c52" />
 
 - 게시판 화면
   
@@ -197,7 +197,7 @@ flutter run -d ios
 
 - 검색 화면
 
-<img width="360" alt="Screenshot_20251205_123001" src="https://github.com/user-attachments/assets/3b858472-d253-45ef-9dbf-fa3dac48c628" />
+  <img width="360" alt="Screenshot_20251205_123001" src="https://github.com/user-attachments/assets/3b858472-d253-45ef-9dbf-fa3dac48c628" />
 
 - 평가 화면
   
@@ -207,7 +207,7 @@ flutter run -d ios
 
 - 마이페이지
 
-<img width="360" alt="Screenshot_20251205_123132" src="https://github.com/user-attachments/assets/1fd58f66-62fa-4442-a98f-2577de4d47b2" />
+  <img width="360" alt="Screenshot_20251205_123132" src="https://github.com/user-attachments/assets/1fd58f66-62fa-4442-a98f-2577de4d47b2" />
 
 </details>
 

@@ -178,6 +178,7 @@ public class CommentService {
                 .musicalTitle(comment.getMusical().getTitle())  // 뮤지컬 제목 추가
                 .userId(comment.getUser().getId())
                 .username(comment.getUser().getNickname())
+                .profileImageUrl(comment.getUser().getProfileImageUrl())  // 프로필 이미지 URL 추가
                 .content(comment.getContent())
                 .parentId(comment.getParent() != null ? comment.getParent().getId() : null)
                 .depth(comment.getDepth())

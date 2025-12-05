@@ -19,6 +19,7 @@ public class CommentResponseDto {
     private String musicalTitle;  // 뮤지컬 제목 추가
     private Long userId;
     private String username;
+    private String profileImageUrl;  // 프로필 이미지 URL 추가
     private String content;
     
     // 대댓글 관련 필드

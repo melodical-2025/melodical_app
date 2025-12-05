@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/auth/**", "/oauth2/**", "/api/token/**").permitAll()
+                        .requestMatchers("/uploads/**").permitAll() // 정적 리소스 허용
                         .requestMatchers(HttpMethod.GET,"/api/musicals/fetch", "/api/musicals/rated").permitAll()
                         .requestMatchers("/api/recommendations/**").permitAll()
                         .requestMatchers("/api/app/**").permitAll()

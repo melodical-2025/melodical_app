@@ -16,4 +16,5 @@ public class UserProfileResponse {
     private String nickname;
     private String provider;  // local, google, kakao, naver
     private String providerId;
+    private String profileImageUrl;
 }

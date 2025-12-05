@@ -4,6 +4,7 @@ class Comment {
   final String? musicalTitle;  // 뮤지컬 제목 추가
   final int userId;
   final String username;
+  final String? profileImageUrl;  // 프로필 이미지 URL 추가
   final String content;
   final DateTime createdAt;
   final DateTime? updatedAt;
@@ -21,6 +22,7 @@ class Comment {
     this.musicalTitle,
     required this.userId,
     required this.username,
+    this.profileImageUrl,
     required this.content,
     required this.createdAt,
     this.updatedAt,
@@ -38,6 +40,7 @@ class Comment {
       musicalTitle: json['musicalTitle'],
       userId: json['userId'],
       username: json['username'] ?? 'Unknown',
+      profileImageUrl: json['profileImageUrl'],
       content: json['content'],
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
@@ -58,6 +61,7 @@ class Comment {
       'musicalTitle': musicalTitle,
       'userId': userId,
       'username': username,
+      'profileImageUrl': profileImageUrl,
       'content': content,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
@@ -68,7 +72,6 @@ class Comment {
       'replies': replies.map((r) => r.toJson()).toList(),
     };
   }
-
   // 좋아요 개수 업데이트를 위한 copyWith 메서드
   Comment copyWith({
     int? id,
@@ -76,6 +79,7 @@ class Comment {
     String? musicalTitle,
     int? userId,
     String? username,
+    String? profileImageUrl,
     String? content,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -91,6 +95,7 @@ class Comment {
       musicalTitle: musicalTitle ?? this.musicalTitle,
       userId: userId ?? this.userId,
       username: username ?? this.username,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
       content: content ?? this.content,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,

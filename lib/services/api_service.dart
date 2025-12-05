@@ -1,7 +1,10 @@
 // lib/services/api_service.dart
 import 'dart:convert';
 import 'dart:async';
+import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
+import 'package:mime/mime.dart';
 import '../models/musical.dart';
 import '../models/song.dart';
 import '../models/api_exception.dart';
@@ -187,6 +190,79 @@ class ApiService {
   /// 현재 사용자 정보 조회
   static Future<Map<String, dynamic>> getCurrentUser() async {
     final resp = await get('/api/users/me');
+    return jsonDecode(utf8.decode(resp.bodyBytes));
+  }
+
+  /// ID로 사용자 프로필 조회
+  static Future<Map<String, dynamic>> getUserProfileById(int userId) async {
+    final resp = await get('/api/users/$userId');
+    return jsonDecode(utf8.decode(resp.bodyBytes));
+  }
+
+  /// 사용자 통계 정보 조회 (찜, 평가 개수 포함)
+  static Future<Map<String, dynamic>> getUserStats(int userId) async {
+    final resp = await get('/api/users/$userId/stats');
+    return jsonDecode(utf8.decode(resp.bodyBytes));
+  }
+
+  /// 프로필 이미지 업로드
+  static Future<Map<String, dynamic>> uploadProfileImage(File imageFile) async {
+    try {
+      final token = await _ts.getToken();
+      if (token == null) {
+        throw ApiException(message: '로그인 정보가 없습니다.');
+      }
+      
+      print('🔵 프로필 이미지 업로드 시작');
+      print('파일 경로: ${imageFile.path}');
+      print('파일 존재 여부: ${await imageFile.exists()}');
+      
+      final uri = Uri.parse('${ApiConfig.baseUrl}/api/users/profile-image');
+      print('업로드 URL: $uri');
+      
+      final request = http.MultipartRequest('POST', uri);
+      request.headers['Authorization'] = 'Bearer $token';
+      
+      // mime 패키지로 Content-Type 감지
+      final mimeType = lookupMimeType(imageFile.path);
+      print('감지된 MIME 타입: $mimeType');
+      
+      final multipartFile = await http.MultipartFile.fromPath(
+        'file',
+        imageFile.path,
+        filename: imageFile.path.split('/').last,
+        contentType: mimeType != null ? MediaType.parse(mimeType) : MediaType('image', 'jpeg'),
+      );
+      request.files.add(multipartFile);
+      
+      print('요청 헤더: ${request.headers}');
+      print('파일 크기: ${multipartFile.length} bytes');
+      
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      
+      print('응답 상태 코드: ${response.statusCode}');
+      print('응답 본문: ${response.body}');
+      
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        print('✅ 프로필 이미지 업로드 성공');
+        return jsonDecode(utf8.decode(response.bodyBytes));
+      } else {
+        print('❌ 프로필 이미지 업로드 실패');
+        throw ApiException(
+          statusCode: response.statusCode,
+          message: '프로필 이미지 업로드 실패: ${response.body}',
+        );
+      }
+    } catch (e) {
+      print('❌ 프로필 이미지 업로드 예외 발생: $e');
+      rethrow;
+    }
+  }
+
+  /// 프로필 이미지 삭제
+  static Future<Map<String, dynamic>> deleteProfileImage() async {
+    final resp = await delete('/api/users/profile-image');
     return jsonDecode(utf8.decode(resp.bodyBytes));
   }
 

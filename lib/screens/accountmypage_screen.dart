@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../widgets/navigationbar.dart';
 import '../widgets/stat_box.dart';
 import '../models/user_provider.dart';
 import '../services/api_service.dart';
+import '../config/api_config.dart';
 import '../models/musical.dart';
 import '../models/song.dart';
 import '../models/comment.dart';
@@ -24,6 +27,7 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
   bool _loading = true;
   String _nickname = '';
   String _email = '';
+  String? _profileImageUrl;
 
   int _likedMusicals = 0;  // ⚠️ 찜 API 생기면 교체
   int _ratedMusicals = 0;
@@ -67,6 +71,7 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
       setState(() {
         _nickname = userInfo['nickname'] ?? userInfo['name'] ?? '(닉네임 없음)';
         _email = userInfo['email'] ?? '';
+        _profileImageUrl = userInfo['profileImageUrl'];
       });
     } catch (e) {
       print('⚠️ Failed to refresh user info: $e');
@@ -88,7 +93,8 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
       final userInfo = await ApiService.getCurrentUser();
       _nickname = userInfo['nickname'] ?? userInfo['name'] ?? '(닉네임 없음)';
       _email = userInfo['email'] ?? '';
-      print('✅ Loaded user info: nickname=$_nickname, email=$_email');
+      _profileImageUrl = userInfo['profileImageUrl'];
+      print('✅ Loaded user info: nickname=$_nickname, email=$_email, profileImageUrl=$_profileImageUrl');
     } catch (e) {
       print('⚠️ Failed to load user info: $e');
       // Fallback to UserProvider
@@ -264,10 +270,39 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
   Widget _profileHeader() {
     return Row(
       children: [
-        const CircleAvatar(
-          radius: 26,
-          backgroundColor: Color(0xFFFFD9A3),
-          child: Icon(Icons.music_note, color: primary, size: 22),
+        Stack(
+          children: [
+            CircleAvatar(
+              radius: 36,
+              backgroundColor: const Color(0xFFFFD9A3),
+              backgroundImage: _profileImageUrl != null && _profileImageUrl!.isNotEmpty
+                  ? NetworkImage('${ApiConfig.baseUrl}$_profileImageUrl')
+                  : null,
+              child: _profileImageUrl == null || _profileImageUrl!.isEmpty
+                  ? const Icon(Icons.music_note, color: primary, size: 28)
+                  : null,
+            ),
+            Positioned(
+              right: 0,
+              bottom: 0,
+              child: GestureDetector(
+                onTap: _changeProfileImage,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    size: 16,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
         const SizedBox(width: 12),
         Expanded(
@@ -292,6 +327,91 @@ class _AccountMyPageScreenState extends State<AccountMyPageScreen> {
         ),
       ],
     );
+  }
+  
+  Future<void> _changeProfileImage() async {
+    final ImagePicker picker = ImagePicker();
+    
+    // 이미지 소스 선택 다이얼로그
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('프로필 이미지 변경'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('갤러리에서 선택'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('카메라로 촬영'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty)
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('프로필 이미지 삭제', style: TextStyle(color: Colors.red)),
+                onTap: () => Navigator.pop(context, null),
+              ),
+          ],
+        ),
+      ),
+    );
+    
+    if (source == null && (_profileImageUrl == null || _profileImageUrl!.isEmpty)) {
+      return;
+    }
+    
+    // 프로필 이미지 삭제
+    if (source == null) {
+      try {
+        await ApiService.deleteProfileImage();
+        await _refreshUserInfo();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('프로필 이미지가 삭제되었습니다')),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('프로필 이미지 삭제 실패: $e')),
+          );
+        }
+      }
+      return;
+    }
+    
+    // 이미지 선택
+    final XFile? image = await picker.pickImage(
+      source: source,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+    
+    if (image == null) return;
+    
+    try {
+      // 이미지 업로드
+      await ApiService.uploadProfileImage(File(image.path));
+      await _refreshUserInfo();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('프로필 이미지가 변경되었습니다')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('프로필 이미지 업로드 실패: $e')),
+        );
+      }
+    }
   }
 
   Widget _statsRow() {

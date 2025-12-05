@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import '../models/comment.dart';
 import '../repositories/comment_repository.dart';
 import '../services/api_service.dart';
+import '../config/api_config.dart';
 import 'post_screen.dart';
 
 class BoardScreen extends StatefulWidget {
@@ -367,6 +368,20 @@ class _BoardScreenState extends State<BoardScreen> {
                         color: Colors.grey,
                       ),
                     ),
+                  GestureDetector(
+                    onTap: () => _showUserProfilePopup(comment.userId),
+                    child: CircleAvatar(
+                      radius: 20,
+                      backgroundColor: Colors.grey[300],
+                      backgroundImage: comment.profileImageUrl != null && comment.profileImageUrl!.isNotEmpty
+                          ? NetworkImage('${ApiConfig.baseUrl}${comment.profileImageUrl}')
+                          : null,
+                      child: comment.profileImageUrl == null || comment.profileImageUrl!.isEmpty
+                          ? const Icon(Icons.person, size: 16, color: Color(0xFFE17951))
+                          : null,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
                   Text(
                     comment.username,
                     style: const TextStyle(
@@ -492,6 +507,95 @@ class _BoardScreenState extends State<BoardScreen> {
             ),
         ],
       ),
+    );
+  }
+
+  Future<void> _showUserProfilePopup(int userId) async {
+    try {
+      final userStats = await ApiService.getUserStats(userId);
+      
+      if (!mounted) return;
+      
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        builder: (context) => Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircleAvatar(
+                radius: 50,
+                backgroundColor: const Color(0xFFFFD9A3),
+                backgroundImage: userStats['profileImageUrl'] != null && userStats['profileImageUrl'].isNotEmpty
+                    ? NetworkImage('${ApiConfig.baseUrl}${userStats['profileImageUrl']}')
+                    : null,
+                child: userStats['profileImageUrl'] == null || userStats['profileImageUrl'].isEmpty
+                    ? const Icon(Icons.person, size: 40, color: Color(0xFFE17951))
+                    : null,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                userStats['nickname'] ?? 'Unknown',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFFE17951),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                userStats['email'] ?? '',
+                style: const TextStyle(
+                  fontSize: 14,
+                  color: Colors.grey,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _buildStatColumn(Icons.favorite, '찜한 개수', '${userStats['favoriteCount'] ?? 0}'),
+                  _buildStatColumn(Icons.star, '뮤지컬 평가', '${userStats['ratedMusicalCount'] ?? 0}'),
+                  _buildStatColumn(Icons.music_note, '음악 평가', '${userStats['ratedMusicCount'] ?? 0}'),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('사용자 정보를 불러올 수 없습니다: $e')),
+        );
+      }
+    }
+  }
+
+  Widget _buildStatColumn(IconData icon, String label, String value) {
+    return Column(
+      children: [
+        Icon(icon, color: const Color(0xFFE17951), size: 28),
+        const SizedBox(height: 8),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Colors.grey),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+      ],
     );
   }
 }

@@ -25,6 +25,9 @@ public class User {
 
     @Column(name = "nickname")
     private String nickname; // 사용자 정의 닉네임
+    
+    @Column(name = "profile_image_url")
+    private String profileImageUrl; // 프로필 이미지 URL
 
     private String role; // ex) "USER", "ADMIN"
 

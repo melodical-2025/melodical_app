@@ -177,37 +177,37 @@ flutter run -d ios
 
 - 뮤지컬 선택 화면
 
-  <img width="1080" height="2424" alt="Screenshot_20251205_115831" src="https://github.com/user-attachments/assets/eb1e24ff-5dc0-4175-b6d0-794020384e67" />
+  <img width="360" alt="Screenshot_20251205_115831" src="https://github.com/user-attachments/assets/eb1e24ff-5dc0-4175-b6d0-794020384e67" />
 
 - 음악 선택 화면
   
-  <img width="1080" height="2424" alt="Screenshot_20251205_115849" src="https://github.com/user-attachments/assets/adf7970e-47c6-4572-8aaa-222d4e3afe55" />
+  <img width="360" alt="Screenshot_20251205_115849" src="https://github.com/user-attachments/assets/adf7970e-47c6-4572-8aaa-222d4e3afe55" />
 
 - 홈화면
   
-  <img width="1080" height="2424" alt="Screenshot_20251205_120057" src="https://github.com/user-attachments/assets/fcb4d602-b5a5-4a49-85c9-7321826aa362" />
+  <img width="360"  alt="Screenshot_20251205_120057" src="https://github.com/user-attachments/assets/fcb4d602-b5a5-4a49-85c9-7321826aa362" />
 
 - 뮤지컬 작품 상세 화면
   
-<img width="1080" height="2424" alt="Screenshot_20251205_120116" src="https://github.com/user-attachments/assets/52d86c5e-30a0-4983-a50b-9e3c17331c52" />
+<img width="360" alt="Screenshot_20251205_120116" src="https://github.com/user-attachments/assets/52d86c5e-30a0-4983-a50b-9e3c17331c52" />
 
 - 게시판 화면
   
-  <img width="1080" height="2424" alt="Screenshot_20251205_120133" src="https://github.com/user-attachments/assets/5c9a5a79-4250-4b25-8e42-d78f71fe4014" />
+  <img width="360" alt="Screenshot_20251205_120133" src="https://github.com/user-attachments/assets/5c9a5a79-4250-4b25-8e42-d78f71fe4014" />
 
 - 검색 화면
 
-<img width="1080" height="2424" alt="Screenshot_20251205_123001" src="https://github.com/user-attachments/assets/3b858472-d253-45ef-9dbf-fa3dac48c628" />
+<img width="360" alt="Screenshot_20251205_123001" src="https://github.com/user-attachments/assets/3b858472-d253-45ef-9dbf-fa3dac48c628" />
 
 - 평가 화면
   
-  <img width="1080" height="2424" alt="Screenshot_20251205_120214" src="https://github.com/user-attachments/assets/c9c305b9-8f31-44a8-98d5-89d5482b51de" />
+  <img width="360" alt="Screenshot_20251205_120214" src="https://github.com/user-attachments/assets/c9c305b9-8f31-44a8-98d5-89d5482b51de" />
 
-  <img width="1080" height="2424" alt="Screenshot_20251205_120220" src="https://github.com/user-attachments/assets/1298dbfc-ef1a-4cc7-88a8-d06db1f574c5" />
+  <img width="360" alt="Screenshot_20251205_120220" src="https://github.com/user-attachments/assets/1298dbfc-ef1a-4cc7-88a8-d06db1f574c5" />
 
 - 마이페이지
 
-<img width="1080" height="2424" alt="Screenshot_20251205_123132" src="https://github.com/user-attachments/assets/1fd58f66-62fa-4442-a98f-2577de4d47b2" />
+<img width="360" alt="Screenshot_20251205_123132" src="https://github.com/user-attachments/assets/1fd58f66-62fa-4442-a98f-2577de4d47b2" />
 
 </details>
 

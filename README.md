@@ -134,6 +134,8 @@ flutter run -d ios
 
 ## 📊 추천 알고리즘
 
+![인증·캐시 및 3단계 뮤지컬 추천 파이프라인](docs/diagrams/recommendation-pipeline.png)
+
 ### Stage-1: Candidate Generation
 - **음악 취향 기반 CF**: 유사한 음악 취향을 가진 사용자들이 선호하는 뮤지컬 추천
 - **뮤지컬 취향 기반 CF**: 유사한 뮤지컬 관람 이력을 가진 사용자들의 선호작 추천
